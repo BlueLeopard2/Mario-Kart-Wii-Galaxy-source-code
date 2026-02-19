@@ -1,0 +1,285 @@
+·Updated to 2.0.1
+Remaining bugs (if you get them, PLEASE report how it happened):
+-At the end of a KO with HAW, Miis are sometimes wrong.
+-In OTT KO, the wrong track is sometimes selected (multiple rooms have been made, unable to replicate).
+-Packs crash if there is exactly 1 CT cup (unable to replicate).
+-Issues on large tracks with LEX files (like Plain of Atlantis) crashing on NTSC-J (might be fixed with the correct loader).
+-TT Replays can softlock on NTSC-J (might be fixed with the correct loader).
+-Custom Menu music (offline_bg.brstm) stops after some seconds by itself (unable to replicate).
+
+Creator Changes:
+-The wrong Loader.pul was included in the previous version, which caused NTSC-K to be completely broken and non-PAL versions to have various bugs such as cannons not working.
+-May have fixed the bug where invalid and unusable configs would get built.
+-Fixed experts not outputting correctly.
+-Fixed trophyCount ignoring CT experts.
+
+Engine Changes:
+-Host Always Wins now works in KO and OTT.
+-Fixed bad port causing the starting item to be missing on NTSC-U.
+-Fixed CT experts not loading and causing a hang.
+-Fixed the OTT Ghost toggle crashing the game when unselecting a ghost.
+-Fixed custom pack settings saving but not loading.
+-Fixed "Change Character" button in TTs crashing the game.
+-Fixed custom BRSTMs not working if using slot indexes.
+
+KO Changes:
+-Various rule changes:
+	-If races per KO is 1, KOs are position based.
+	-If it's more than 1, KOs are score based, and player points reset every time KOs occur.
+	-If players who should be KOd are tied, the race is played again (the players with less points than the tie are still KOd).
+	-Fixed the "Spectate/Quit" BMG and added a 10s countdown.
+-Fixed incorrect players being forced in spectating.
+-Team KO is no longer a thing.	
+	
+OTT Fixes:
+-Fixed the OTT regional button getting selected even when clicking Worldwide.
+
+Kamek Linker:
+-Massively improved debugging outputs (much faster, displays every function with the proper full name).
+
+·Updated to 2.0.0
+DISCLAIMER:
+-This update is very large and there are only 2 people working on Pulsar as a whole. It is likely that a lot of bugs made it through, most notably in KO. Some may lead to crashes and as a consequence, large packs should be make the decision to use this update cautiously. Bug fixes will happen as reports come in and hopefully the engine gets stable quickly.
+
+MAJOR CHANGES:
+-Added KO mode. 
+-Added OnlineTT mode.
+-Variants are now supported and can be edited through the creator.
+-LEX files are now supported.
+-XPF files are now supported, using Gabriela's port to Kamek.
+-Added Gabriela's USB GCN package. (Major thanks to her for both of these features)
+
+KO Features:
+-It is largely identical to CTGP's implementation.
+-Bonus items are not included as that is MrBean's creative idea and the point isn't to make a straight copy of his work.
+-The mode has its own settings page:
+	-Force 1v1 final; if 2 players would be eliminated in a 3P room, only 1 player will be eliminated and a 1v1 final race will be played.
+	-Races between KOs
+	-KO per race
+-Non-hosts players who get eliminated can choose to spectate or to leave immediately. Hosts must stay until the end.
+-Host always wins is not available in KO. It wouldn't make sense for the host to be able to select the track even if they're out.
+-At the end of a KO, a page with various stats of the winner is displayed: 
+	-Average placement percent, lower values mean the winner finished in good positions on average.
+	-Total time in danger, which is the total amount of frames you were in a KO position during the last 5s of every race.
+	-Almost KO'd count, which is the amount of races you were in danger for at least 1s out of the last 5s.
+
+OnlineTT Features:
+-Playable in every VS mode.
+-A regional category for OnlineTT is available, separate from normal regionals.
+-Has all the features of the original mode. (TT cycles, other players are ghosts, no collision, slipstream, setting to mute other players and the position tracker etc...).
+-You can start with 3 mushrooms or 3 feathers:
+	-Offline, there is a setting to choose.
+	-Online, in regionals, you will always start with mushrooms; in friend rooms the host has a setting to choose.
+-Online, you can change your combo after the race has been selected. The host gets to choose whether this is allowed or not in friend rooms.
+-Will display time difference to the player behind if in 1st or to 1st and the player ahead.
+-You can select a ghost on every track for every TT mode (on the Ghost Select page or after setting a ghost) that will appear offline and in online OTT races under 12 players.
+-No ghost saving for now as there are a ton of syncing issues and/or corrupted ghosts getting created from previous tests.
+
+Variants:
+-Up to 8 variants per track are available.
+-A button on the creator under each track allows you to specify each variant.
+-A common name that will be the name displayed on the cup select must be inputted. (for example, Animal Crossing would be the common name of Animal Crossing Summer etc...)
+-We are aware that the current UI is not optimal, but it requires a large overhaul which may happen in the future.
+-BRSTM expansion supports variants, either via the variant name or by using X_Y where X is the track index and Y the variant index (0-indexed).
+
+Creator Changes:
+-File names can now be mass imported.
+-Fixed alphabetization not working correctly when tracks had no version.
+-Fixed various out-of-bounds exceptions (alphabetization and mass import mainly).
+-Fixed FolderToTrackName.txt file. It was using file names instead of track names.
+-Fixed custom icons not working in-game.
+
+Engine Changes:
+-Upon starting a room, the gamemode will now be displayed via the host message.
+-Settings page improvements; see below. 
+-Check rankings has been replaced by "Go To Wiimmfi" as the previous button was non-functional.
+-Network packets are now expanded. Developers can add their own data to any of the packet and parse it however they want.
+-Fixed offline the track randomizer selecting wrong tracks. Do not spam buttons while the track is being randomized or you'll be sent back to drift select.
+-Fixes various sound related bugs.
+
+Linker Changes:
+-Better implementation of region specific writes; requires a new Loader.pul.
+
+Misc Changes:
+-Substantial documentation (UI, objects, 3D rendering etc...)
+
+Settings changes:
+-You can now have an infinite amount of settings Page
+-Custom pack settings are completely independant from base Pulsar settings. This change unfortunately means that for this update custom pack settings will be lost.
+-To add your custom settings, go to SettingsParam.cpp and edit the arrays. Add 0x60000 to the usual settings BMGs for custom pack settings.
+
+·Updated to 1.3.7
+Creator Changes:
+-Fixed alphabetization incorrectly sorting escape sequences due to whitespace.
+Engine Changes:
+-Title BG music can now be customized like Wifi and Offline Menu Music by putting a brstm called "title_bg.brstm" in My Stuff.
+-Fixed silent BG music and related crashes when someone would have My Stuff on but no bg brstms. Riivolution would create an empty file no matter what.
+-Rewrote BuildPulsar.bat (previously BuildCode.bat) to use generic paths so that it works as is.
+
+·Updated to 1.3.6
+Creator Changes:
+-Fixed alphabetization ignoring versions.
+-Icon count is now correctly written to Config files.
+Engine Changes:
+-Offline Menu BG music can now be customized like Wifi Music by putting a brstm called "offline_bg.brstm" in My Stuff.
+-Fixed Wifi Music streams not playing in the correct sequence. The streams now match the vanilla ones.
+-Track blocking now works in Friend Rooms.
+-Track blocking now takes Random votes into account.
+-Blooper no longer has an erroneous initial timer.
+-Pressing watch replay after finishing a Time Trial no longer crashes the game. The crash was due to the game trying to extract data from the fanfare BRSTM which wasn't loaded if music was disabled.
+-Fixed the friend room Title BMG being hidden due to Settings.
+
+·Updated to 1.3.5
+Creator Changes:
+-Staff ghosts will now be put in an Experts folder. This folder no longer needs to be moved to the NAND.
+-Edited the XML to reflect the various additions.
+Engine Changes:
+-Wifi Music can now be customized by putting a brstm called "wifi_bg.brstm" in My Stuff. That file supports up to 4 streams. Stream 1 is the main wifi menu, stream 2 is the friendlist, stream 3 is when clicking worldwide and stream 4 looks unused (but it could be used).
+-Now correctly keeps the ghost that was being raced when retrying a race after setting a new time.
+-Fixed a settings bug where the total size of the file was miscalculated which was causing heap corruption and crashes on boot.
+
+·Updated to 1.3.4
+Creator Changes:
+-Fixed a pasting issue in track name boxes which allowed invalid characters and could lead to a corrupted config.
+Engine Changes:
+-Fixed a SELECT packet phase sync issue that was causing room hangs if the host disconnected.
+-Fixed the "Disable All" music option not disabling Wifi Waiting music.
+-Fixed "In Order" offline VS mode.
+
+·Updated to 1.3.3
+Creator Changes:
+-Fixed import bug which caused boxes to be empty.
+-Fixed alphabetisation of escape sequences in track names.
+Engine Changes:
+-Fixed a bad port in the battle glitch code.
+
+·Updated to 1.3.2
+Creator Changes:
+-Fixed mass import window height issues (a bug that was previously fixed but came back due to a merge issue).
+-Fixed some import bugs.
+-Fixed Linux ghost folder issues due to case-sensitivity.
+Engine Changes:
+-Fixed speedometer player 1 being in the wrong location in local multiplayer.
+-Fixed softlock when no one picked a track in battle.
+-Fixed music speedup not working correctly sometimes online.
+-Fixed ultra mini-turbos sparks not disappearing.
+-Fixed total trophy count not decreasing when a track gets replaced or removed.
+
+·Updated to 1.3.1
+Creator Changes:
+-Fixed an infinite loop that happened when trying to build a pack with tracks containing escape sequences such as \c{red3}
+Engine Changes:
+-Fixed a bad NTSC-U port that caused the music setting to crash.
+-Fixed a bad NTSC-K port that caused cup icons to be wrong.
+
+·Updated to 1.3.0
+MAJOR CHANGE:
+-Config.pul now uses version 2. If you want to use the new features, you need to import and reexport your config file.
+Creator Changes:
+-Build and Mass Import now use context menus for better accessibility.
+-"Build Config Only" now builds the config without checking for files. The resulting file cannot be used in-game, but can be imported and modified in the software as needed.
+-The previous "Build Config Only" behaviour is now executed by "Build Config & Tracks"
+-Cup names and icons can now be imported without first having to import tracks.
+-Building no longer deletes the already existing output folder if it fails.
+-Mass importing tracks no longer requires versions.
+-Alphabetize now ignores escape sequences.
+-Added the option to choose the timer a host has to select a track in between races.
+Engine Changes:
+-Added a Disable Music setting.
+-Now has an in-game option to use an alphabetical layout.
+-GPs trophies and ranks are now tracked by the settings file.
+-Playing offline VS with the "In Order" setting no longer repeats the first selected track if it is not the first track of a cup.
+-The LAP brctr no longer causes crashes for non-english players.
+-Duplicate times now create a new rkg file.
+-Fixed a bug where picking DS Yoshi Falls as the host as the end of a race would instead pick a random track.
+-Fixed randomizer getting stuck (the previous bug fix got lost due to a merge issue).
+
+·Updated to 1.2.1
+Creator Changes:
+-Fixed battle arenas not working for music slots in the mass import window.
+-Fixed a crash on cups >100 when removing the name of the cup.
+
+·Updated to 1.2.0
+Creator Changes:
+-Added a new tab to edit regular tracks experts. It is only visible if regs are enabled.
+-Added a button to edit Pulsar BMGs directly. Note that you will need to edit these BMGs every time, since BMG ids could be removed, changed or added by any given update. For your own custom BMGs, taking MenuSingle_X.szs "common.bmg" file, editing it to your needs and putting it in UIAssets is a guaranteed permanent solution.
+-Cup names and icons are no longer limited to 100. If you use more than 100 icons, the images resolution will gradually get reduced to preserve a small UIAssets.szs file.
+-Now includes Wiimm tools dlls.
+-No longer adds a space to every track on import.
+-Now asks if the XML should be created on Build Config Only click.
+-Now creates semi-unique (the mod name and a random 0-255 number) riivolution patch IDs on every build to prevent conflicts.
+-Only one instance of the software can now exist.
+-Fixed text being allowed in various number-only boxes and leading to a crash.
+-Fixed bad date imports when trying to import config files built on a different locale.
+-Fixed bad CC distribution imports.
+-Improved build and import code.
+Engine Changes:
+-Host always wins now provides a random button.
+-Speedometer assets (in RaceAssets.szs) are now called PULSpeedo to prevent conflicts with CTGP's speedometer.
+-COOB no longer activates on normal AREAs type 10.
+-Fixed a crash that occured if you didn't select a track after selecting a cup online.
+-Fixed an offline bug where a given SZS would get reused if it was on the same track slot as the previously played track.
+-Fixed a badly ported NTSC-U address that was causing a crash when an item landed on the Maple Treeway bridge.
+-Fixed infinite track randomizing issues.
+-Lap splits are now displayed for up to 9 laps (credit to WingCapMan for the UI assets).
+-Rear-view inputs no longer get stored into ghost files. Files that were already saved with rear-view inputs will unfortunately look backwards when replayed.
+
+·Updated to 1.1.3
+Creator Changes:
+-Fixed bad XMLs getting created.
+
+·Updated to 1.1.2
+Creator Changes:
+-Trying to build a pack of over 100 cups no longer throws an exception.
+-Fixed mass import window scaling issue.
+-Now creates a CTBRSTM folder inside the pack folder. This is where BRSTM expansion files need to be put.
+-Now creates a My Stuff folder.
+Engine Changes:
+-Fixed author display BMG issue in VS intro.
+
+·Updated to 1.1.1
+Creator Changes:
+-Import no longer fails for configs of over 100 cups.
+-No longer warns an infinite amount of times about names and icons for cup indexes over 100.
+-Backslashes are now allowed in track names, but should only be used for BMG formatting (e.g. for coloured text)
+Engine Changes:
+-New race settings to choose the speedometer location and to change its number of fractional part digits
+-New host setting to allow/forbid the use of mii heads in a friend room
+
+·Updated to 1.1.0
+MAJOR CHANGE:
+-Pulsar data on dolphin now lives in Dolphin Emulator/Wii/shared2. It was previously in Dolphin Emulator/Wii/title/00010004 but some users' NAND had specific permissions prevent the use of that location. MAKE SURE TO MOVE YOUR PACK DATA TO THE NEW LOCATION.
+Misc:
+-A discord server has been created at https://discord.gg/Wd8uGCrDVg
+Creator Changes:
+-Now allows custom cup icons and names. They can both be mass imported. PNG is the recommended format for the images.
+-Galaxy colosseum is now selectable as a music slots. Battle arenas are no longer selectable as track slots..
+-The input/output folders no longer get created at the wrong location when the software is started through a .pul file.
+-Attempt at making the mass import window work for everyone (the save buttons is somehow sometimes outside of the window and inaccessible), although this likely still does not address the issue.
+-Fixed massive trophy counts getting written to config files.
+Engine Changes:
+-Cup Select buttons are no longer mistakenly unaccessible.
+-If no controller input is made on the strap screen, boot to wiimmfi will be skipped (as it stands, no way to determine which controller the player is attempting to use).
+-Flaps now work properly.
+-RKG ghosts no longer get unproperly overwritten on load (currently, this causes slightly slower ghost loading times which is especially noticeable on console).
+-Improved sample inheritance file for those wanting to write their own codes.
+-Settings can now be accessed on packs that have neither feathers nor 200cc.
+-Fixed a crash that would occur on packs where cups got added.
+-Fixed BMG issue in GP mode.
+-Fixed race count related crash in friend rooms.
+-Fixed bad cup ordering on packs with 8 or fewer total cups.
+-Fixed track names being stored incorrectly in leaderboard files.
+
+
+·Updated to 1.0.1
+Creator Changes:
+-Pasting is no longer possible in numbers only boxes
+-RKG dropping now works properly
+-CC probabilities boxes now function better
+
+·Updated to 1.0.0
+Engine Changes:
+-Release version
+Creator Changes:
+-Release version
+

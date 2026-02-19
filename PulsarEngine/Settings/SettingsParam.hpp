@@ -1,0 +1,1128 @@
+#ifndef _SETTINGS_PARAMS_
+#define _SETTINGS_PARAMS_
+#include <kamek.hpp>
+#include <PulsarSystem.hpp>
+#include <Config.hpp>
+
+namespace Pulsar {
+namespace UI { class SettingsPanel; }
+namespace Settings {
+
+class Params {
+public:
+    static const int pulsarPageCount = 5;
+    static const int userPageCount = 3;
+    static const int pageCount = pulsarPageCount + userPageCount;
+
+    static const int maxRadioCount = 6; //per page, due to space
+    static const int maxScrollerCount = 5; //per page, due to space
+
+    //Pulsar and User
+    static u8 radioCount[pageCount];
+    static u8 scrollerCount[pageCount];
+    static u8 buttonsPerPagePerRow[pageCount][maxRadioCount];
+    static u8 optionsPerPagePerScroller[pageCount][maxScrollerCount];
+
+};
+
+//Contains all the settings. 
+enum Type {
+    SETTINGSTYPE_MENU,
+    SETTINGSTYPE_RACE,
+    SETTINGSTYPE_HOST,
+    SETTINGSTYPE_OTT,
+    SETTINGSTYPE_KO,
+};
+
+//If you want to add settings to your packs, they go in this enum, and GetUserSettingValue should be used to obtain the value of a given setting
+enum UserType {
+    SETTINGSTYPE_MKWG1, //HOST
+    SETTINGSTYPE_MKWG2, //HOST, OFFLINE
+    SETTINGSTYPE_MKWG3, //OFFLINE
+    SETTINGSTYPE_MKWG4, //HUDCOLORS
+    SETTINGSTYPE_MKWG5, //POSITIONCOUNTERCOLORS
+};
+
+}//namespace Settings
+
+//SETTINGS ENUM, for the page, DO NOT FORGET THE +6 for scrollers (see menu settings for example)
+//Use these 3 for "u32 setting" in GetSettingValue, the return will be the value of the other enums
+enum MenuSettings {
+    SETTINGMENU_RADIO_FASTMENUS = 0,
+    SETTINGMENU_RADIO_LAYOUT = 1,
+    SETTINGMENU_RADIO_MUSIC = 2,
+    SETTINGMENU_SCROLL_BOOT = 0 + 6
+};
+
+enum RaceSettings {
+    SETTINGRACE_RADIO_MII = 0,
+    SETTINGRACE_RADIO_SPEEDUP = 1,
+    SETTINGRACE_RADIO_BATTLE = 2,
+    SETTINGRACE_RADIO_BLUES = 3,
+    SETTINGRACE_RADIO_SOM = 4,
+    SETTINGRACE_SCROLL_SOM = 0 + 6
+};
+
+enum HostSettings {
+    SETTINGHOST_RADIO_HOSTWINS = 0,
+    SETTINGHOST_ALLOW_MIIHEADS = 1,
+    SETTINGHOST_CC = 1 + 6,
+    SETTINGHOST_SCROLL_GP_RACES = 0 + 6
+};
+
+enum OTTSettings {
+    SETTINGOTT_ONLINE = 0,
+    SETTINGOTT_OFFLINE = 1,
+    SETTINGOTT_ALLOWCHANGECOMBO = 2,
+    SETTINGOTT_ALLOWUMTS = 3,
+    SETTINGOTT_MUTEPTANDPLAYERS = 4,
+};
+
+enum KOSettings {
+    SETTINGKO_ENABLED = 0, //ADD LAPKO
+    SETTINGKO_FINAL = 1,
+    SETTINGKO_KOPERRACE = 0 + 6,
+    SETTINGKO_RACESPERKO = 1 + 6,
+};
+
+enum MKWG1 {    //HOST
+    SETTINGMKWG_VEHICLERESTRICT = 0,
+    SETTINGMKWG_CHARRESTRICT = 1,
+    SETTINGMKWG_FORCEVEHICLEMODE = 0 + 6,
+};
+
+enum MKWG2 {    //HOST, OFFLINE
+    SETTINGMKWG_THUNDERCLOUD = 0,
+    SETTINGMKWG_FLYINGBLOOP = 1,
+    SETTINGMKWG_INVIS_WALLS = 2,
+    SETTINGMKWG_LAPCOUNT = 1 + 6,
+    SETTINGMKWG_ITEMMODE = 0 + 6,
+};
+
+enum MKWG3 {    //OFFLINE
+    SETTINGS_INPUT_VIEWER = 0,
+    SETTINGS_FINISH_TIMES = 1,
+    SETTINGMKWG_HARDCPUS = 2, 
+    SETTINGMKWG_CUSTOMCC = 3,
+    SETTINGMKWG_VEHICLEMODE = 0 + 6,
+};
+
+/*enum MKWG4 {    //HUDCOLORS
+    SETTINGS_COLORS = 0,
+    SETTINGS_BLUE = 0 + 6,
+    SETTINGS_GREEN = 1 + 6,
+    SETTINGS_RED = 2 + 6,
+    SETTINGS_ALPHA = 3 + 6,
+};
+
+enum MKWG5 {    //POSITIONCOLORS
+    SETTINGS_POSITIONCOLORS = 0,
+    SECSETTINGS_ALPHA = 0 + 6,
+    SECSETTINGS_BLUE = 1 + 6,
+    SECSETTINGS_GREEN = 2 + 6,
+    SECSETTINGS_RED = 3 + 6,
+};
+
+enum MKWG6 { //GAMEMODES
+    SETTINGS_ITEMRAIN = 0,
+    SETTINGS_FIRSTPERSON = 1,
+    SETTINGS_ETC = 2,
+}*/
+
+//MENU SETTINGS
+enum MenuSettingFastMenus {
+    MENUSETTING_FASTMENUS_DISABLED = 0x0,
+    MENUSETTING_FASTMENUS_ENABLED = 0x1
+};
+
+enum MenuSettingLayout {
+    MENUSETTING_LAYOUT_ALPHABETICAL = 0x0,
+    MENUSETTING_LAYOUT_DEFAULT = 0x1
+};
+
+enum MenuSettingMusic {
+    MENUSETTING_MUSIC_DEFAULT = 0x0,
+    MENUSETTING_MUSIC_DISABLE_ALL = 0x1,
+    MENUSETTING_MUSIC_DISABLE_RACE = 0x2
+};
+
+enum MenuSettingBoot {
+    MENUSETTING_BOOT_DISABLED,
+    MENUSETTING_BOOT_L1,
+    MENUSETTING_BOOT_L2,
+    MENUSETTING_BOOT_L3,
+    MENUSETTING_BOOT_L4
+};
+
+//RACE SETTINGS
+enum RaceSettingMII {
+    RACESETTING_MII_DISABLED = 0x0,
+    RACESETTING_MII_ENABLED = 0x1
+};
+
+enum RaceSettingSPEEDUP {
+    RACESETTING_SPEEDUP_DISABLED = 0x0,
+    RACESETTING_SPEEDUP_ENABLED = 0x1
+};
+
+enum RaceSettingBATTLE {
+    RACESETTING_BATTLE_GLITCH_DISABLED = 0x0,
+    RACESETTING_BATTLE_GLITCH_ENABLED = 0x1,
+    RACESETTING_BATTLE_GLITCH_NONE = 0x2
+};
+
+enum RaceSettingBLUES {
+    RACESETTING_DRAGGABLE_BLUES_DISABLED = 0x0,
+    RACESETTING_DRAGGABLE_BLUES_ENABLED = 0x1
+};
+
+enum RaceSettingSOM {
+    RACESETTING_SOM_LEFT = 0x0,
+    RACESETTING_SOM_RIGHT = 0x1,
+    RACESETTING_SOM_DISABLED = 0x2
+};
+
+enum RaceSettingSOMDigits {
+    HOSTSETTING_SOM_DIGITS_0,
+    HOSTSETTING_SOM_DIGITS_1,
+    HOSTSETTING_SOM_DIGITS_2,
+    HOSTSETTING_SOM_DIGITS_3,
+};
+
+//HOST SETTINGS
+enum HostSettingHAW {
+    HOSTSETTING_HOSTWINS_DISABLED,
+    HOSTSETTING_HOSTWINS_ENABLED
+};
+
+enum HostSettingHostCC {
+    HOSTSETTING_CC_NORMAL,
+    HOSTSETTING_CC_50,
+    HOSTSETTING_CC_REAL100,
+    HOSTSETTING_CC_150,
+    HOSTSETTING_CC_100,
+    HOSTSETTING_CC_400,
+    HOSTSETTING_CC_99999,
+    HOSTSETTING_CC_MIRROR,
+};
+
+enum HostSettingMiiHeads {
+    HOSTSETTING_ALLOW_MIIHEADS_ENABLED,
+    HOSTSETTING_ALLOW_MIIHEADS_DISABLED
+};
+
+enum HostSettingGPRACES {
+    HOSTSETTING_GP_RACES_4,
+    HOSTSETTING_GP_RACES_8,
+    HOSTSETTING_GP_RACES_12,
+    HOSTSETTING_GP_RACES_24,
+    HOSTSETTING_GP_RACES_32,
+    HOSTSETTING_GP_RACES_64,
+    HOSTSETTING_GP_RACES_2,
+    //space for a 7th setting is available
+};
+
+//OTTSETTINGS
+enum OTTSettingOnline {
+    OTTSETTING_ONLINE_DISABLED,
+    OTTSETTING_ONLINE_NORMAL,
+    OTTSETTING_ONLINE_FEATHER,
+};
+
+enum OTTSettingOffline {
+    OTTSETTING_OFFLINE_DISABLED,
+    OTTSETTING_OFFLINE_NORMAL,
+    OTTSETTING_OFFLINE_FEATHER,
+};
+
+enum OTTSettingCombo {
+    OTTSETTING_COMBO_DISABLED,
+    OTTSETTING_COMBO_ENABLED
+};
+
+enum OTTSettingUMTs {
+    OTTSETTING_UMTS_DISABLED,
+    OTTSETTING_UMTS_ENABLED
+};
+
+//KOSETTINGS
+enum KOSettingEnabled {
+    KOSETTING_DISABLED,
+    KOSETTING_ENABLED,
+};
+enum KOSettingFINAL {
+    KOSETTING_FINAL_DISABLED,
+    KOSETTING_FINAL_ALWAYS,
+};
+enum KOSettingKOPerRace {
+    KOSETTING_KOPERRACE_1,
+    KOSETTING_KOPERRACE_2,
+    KOSETTING_KOPERRACE_3,
+    KOSETTING_KOPERRACE_4
+};
+
+enum KOSettingRacesPerKO {
+    KOSETTING_RACESPERKO_1,
+    KOSETTING_RACESPERKO_2,
+    KOSETTING_RACESPERKO_3,
+    KOSETTING_RACESPERKO_4
+};
+//KOSETTINGS
+
+
+//MKWG Pages 1
+enum AccurateItems {
+    ACCURATE_ITEMS_OFF = 0x0,
+    ACCURATE_ITMES_ON = 0x1
+};
+
+enum BlurFixes {
+    BLUR_FIXES_OFF = 0x0,
+    BLUR_FIXES_ON = 0x1
+};
+
+enum ThirtyFPS {
+    THIRTY_FPS_OFF = 0x0,
+    THIRTY_FPS_ON = 0x1
+};
+
+enum GameModes {
+    GAME_MODE_DEFAULT,
+    GAME_MODE_ITEM_RAIN,
+    GAME_MODE_COUNTDOWN,
+};
+
+enum OpponentPrediction {
+    OPPONENT_PREDICTION_DISABLED = 0x0,
+    OPPONENT_PREDICTION_ENABLED = 0x1
+};
+
+enum PerformanceBar {
+    PERFORMANCE_BAR_DISABLED = 0x0,
+    PERFORMANCE_BAR_ENABLED = 0x1
+};
+
+enum FirstPerson {
+    FIRST_PERSON_DISABLED = 0x0,
+    FIRST_PERSON_ENABLED = 0x1
+};
+
+//MKWG Pages 2
+enum ColoredNametags {
+    COLORED_NAMETAGS_DISABLED = 0x0,
+    COLORED_NAMETAGS_ENABLED = 0x1
+};
+
+enum DefaultCharacter {
+    FAVORITE_CHAR_DISABLED = 0x0,
+    FAVORITE_CHAR_ENABLED = 0x1
+};
+
+enum PackMusic {
+    PACK_MUSIC_DISABLED = 0x0,
+    PACK_MUSIC_ENABLED = 0x1
+};
+
+enum AutoTrailItems {
+    ITEMS_AUTO_TRAIL_DISABLED = 0x0,
+    ITEMS_AUTO_TRAIL_ENABLED = 0x1
+};
+
+enum InputViewer {
+    INPUT_VIEWER_OFF,
+    INPUT_VIEWER_ON,
+};
+
+enum SilentControllerChange {
+    SILENT_CONTROLLER_CHANGE_DISABLED = 0x0,
+    SILENT_CONTROLLER_CHANGE_ENABLED = 0x1
+};
+
+
+//MKWG Pages 3
+enum CupsScrolling {
+    CUPS_2 = 0x0,
+    CUPS_4 = 0x1,
+    CUPS_6 = 0x2,
+    CUPS_8 = 0x3
+};
+
+enum TripleBananas {
+    TRIPLE_BANANAS_TRAIL = 0x0,
+    TRIPLE_BANANAS_ROTATE = 0x1
+};
+
+enum NoIdleDC {
+    IDLE_DC_ENABLED = 0x0,
+    IDLE_DC_DISABLED = 0x1
+};
+
+enum CPURubberbanding {
+    RUBBERBANDING_DISABLED = 0x0,
+    RUBBERBANDING_ENABLED = 0x1
+};
+
+enum CPUDifficulty {
+    DIFFICULTY_NORMAL = 0x0,
+    DIFFICULTY_HARD = 0x1,
+    DIFFICULTY_EXTREME = 0x2
+};
+
+enum HidePositionTracker {
+    POSITION_TRACKER_ENABLED = 0x0,
+    POSITION_TRACKER_DISABLED = 0x1
+};
+
+enum Font {
+    FONT_DEFAULT,
+    FONT_NSMBU,
+    FONT_SUPER_MARIO_MAKER,
+    FONT_CRASH_BANDICOOT,
+    FONT_JUST_DANCE,
+    FONT_MK8,
+    FONT_SPLATOON,
+    FONT_MARIO,
+    FONT_SPLATOON1
+};
+
+enum WaitingMusic {
+    WAITING_MUSIC_NORMAL = 0x0,
+    WAITING_MUSIC_COURSE = 0x1
+};
+
+enum BetterMegaFOV {
+    MEGA_FOV_DISABLED = 0x0,
+    MEGA_FOV_ENABLED = 0x1
+};
+
+enum ColoredMinimaps {
+    COLORED_MINIMAPS_DISABLED = 0x0,
+    COLORED_MINIMAPS_ENABLED = 0x1
+};
+
+enum ShowFinishTimes {
+    FINISH_TIMES_DISABLED = 0x0,
+    FINISH_TIMES_ENABLED = 0x1
+};
+
+//MKWG Pages 4
+enum RemoveLuma {
+    REMOVE_LUMA_DISABLED = 0x0,
+    REMOVE_LUMA_ENABLED = 0x1
+};
+
+enum RaceCountModifier {
+    RACE_COUNT_MODIFIER_DISABLED = 0x0,
+    RACE_COUNT_MODIFIER_ENABLED = 0x1
+};
+
+enum AutoAcceleration {
+    AUTO_ACCELERATE_DISABLED = 0x0,
+    AUTO_ACCELERATE_ENABLED = 0x1
+};
+
+enum LightningFlash {
+    LIGHTNING_FLASH_ENABLED = 0x0,
+    LIGHTNING_FLASH_DISABLED = 0x1
+};
+
+enum MillisecondsModifier {
+    MILLISECONDS_NORMAL,
+    MILLISECONDS_ITEMS,
+    MILLISECONDS_SHOCK,
+    MILLISECONDS_CRUSH
+};
+
+enum MiiCamera {
+    MII_STARE_ENABLED,
+    MII_STARE_DISABLED
+};
+
+enum NoBulletModel {
+    BULLET_MODEL_ENABLED,
+    BULLET_MODEL_DISABLED
+};
+
+enum Transmission {
+    TRANSMISSION_NORMAL,
+    TRANSMISSION_INSIDE,
+    TRANSMISSION_OUTSIDE
+};
+
+enum ItemBoxesOnMinimap {
+    ITEM_BOXES_MINIMAP_DISABLED,
+    ITEM_BOXES_MINIMAP_ENABLED
+};
+
+//MKWG Pages 6
+enum OthersMega {
+    OTHERS_MEGA_MUSIC_ENABLED = 0x0,
+    OTHERS_MEGA_MUSIC_DISABLED = 0x1
+};
+
+enum OthersStar {
+    OTHERS_STAR_MUSIC_ENABLED = 0x0,
+    OTHERS_STAR_MUSIC_DISABLED = 0x1
+};
+
+enum MultiChannel {
+    MULTI_CHANNEL_DISABLED = 0x0,
+    MULTI_CHANNEL_ENABLED = 0x1
+};
+
+enum EngineSounds {
+    ENGINE_SOUNDS_ENABLED = 0x0,
+    ENGINE_SOUNDS_DISABLED = 0x1
+};
+
+enum MegaMusic {
+    MEGA_MUSIC_ENABLED = 0x0,
+    MEGA_MUSIC_DISABLED = 0x1
+};
+
+enum StarMusic {
+    STAR_MUSIC_ENABLED = 0x0,
+    STAR_MUSIC_DISABLED = 0x1
+};
+
+enum HideFriendCode {
+    HIDE_FC_DISABLED,
+    HIDE_FC_TITLE,
+    HIDE_FC_ONLINE,
+    HIDE_FC_EVERYWHERE
+};
+
+enum VolumeBRSTM {
+    VOLUME_100,
+    VOLUME_90,
+    VOLUME_80,
+    VOLUME_70,
+    VOLUME_60,
+    VOLUME_50
+};
+
+enum ChompLaunch {
+    CHOMP_LAUNCH_ENABLED,
+    CHOMP_LAUNCH_DISABLED
+};
+
+enum ThwompDamage {
+    THWOMP_DAMAGE_ENABLED,
+    THWOMP_DAMAGE_DISABLED
+};
+
+enum SquishEffect {
+    SQUISH_ENABLED,
+    SQUISH_DISABLED
+};
+
+//MKWG Pages 7
+enum BabyMarioLayers {
+    BABY_MARIO_DEFAULT = 0x0,
+    BABY_MARIO_1 = 0x1,
+    BABY_MARIO_2 = 0x2
+};
+
+enum BabyLuigiLayers {
+    BABY_LUIGI_DEFAULT = 0x0,
+    BABY_LUIGI_1 = 0x1,
+    BABY_LUIGI_2 = 0x2
+};
+
+enum BabyPeachLayers {
+    BABY_PEACH_DEFAULT = 0x0,
+    BABY_PEACH_1 = 0x1,
+    BABY_PEACH_2 = 0x2
+};
+
+enum BabyDaisyLayers {
+    BABY_DAISY_DEFAULT = 0x0,
+    BABY_DAISY_1 = 0x1,
+    BABY_DAISY_2 = 0x2
+};
+
+enum ToadLayers {
+    TOAD_DEFAULT = 0x0,
+    TOAD_1 = 0x1,
+    TOAD_2 = 0x2
+};
+
+enum ToadetteLayers {
+    TOADETTE_DEFAULT = 0x0,
+    TOADETTE_1 = 0x1,
+    TOADETTE_2 = 0x2
+};
+
+enum PeachLayers {
+    PEACH_DEFAULT = 0x0,
+    PEACH_1 = 0x1,
+    PEACH_2 = 0x2
+};
+
+enum LuigiLayers {
+    LUIGI_DEFAULT = 0x0,
+    LUIGI_1 = 0x1,
+    LUIGI_2 = 0x2
+};
+
+enum MarioLayers {
+    MARIO_DEFAULT = 0x0,
+    MARIO_1 = 0x1,
+    MARIO_2 = 0x2
+};
+
+enum DryBonesLayers {
+    DRY_BONES_DEFAULT = 0x0,
+    DRY_BONES_1 = 0x1,
+    DRY_BONES_2 = 0x2
+};
+
+enum KoopaTroopaLayers {
+    KOOPA_KOOPA_DEFAULT = 0x0,
+    KOOPA_TROOPA_1 = 0x1,
+    KOOPA_TROOPA_2 = 0x2
+};
+
+//MKWG Page 8
+enum DaisyLayers {
+    DAISY_DEFAULT_DEFAULT = 0x0,
+    DAISY_1 = 0x1,
+    DAISY_2 = 0x2
+};
+
+enum YoshiLayers {
+    YOSHI_DEFAULT = 0x0,
+    YOSHI_1 = 0x1,
+    YOSHI_2 = 0x2
+};
+
+enum BirdoLayers {
+    BIRDO_DEFAULT = 0x0,
+    BIRDO_1 = 0x1,
+    BIRDO_2 = 0x2
+};
+
+enum DiddyKongLayers {
+    DIDDY_KONG_DEFAULT = 0x0,
+    DIDDY_KONG_1 = 0x1,
+    DIDDY_KONG_2 = 0x2
+};
+
+enum BowserJrLayers {
+    BOWSER_JR_DEFAULT = 0x0,
+    BOWSER_JR_1 = 0x1,
+    BOWSER_JR_2 = 0x2
+};
+
+enum WarioLayers {
+    WARIO_DEFAULT = 0x0,
+    WARIO_1 = 0x1,
+    WARIO_2 = 0x2
+};
+
+enum RosalinaLayers {
+    ROSALINA_DEFAULT = 0x0,
+    ROSALINA_1 = 0x1,
+    ROSALINA_2 = 0x2
+};
+
+enum KingBooLayers {
+    KING_BOO_DEFAULT = 0x0,
+    KING_BOO_1 = 0x1,
+    KING_BOO_2 = 0x2
+};
+
+enum BowserLayers {
+    BOWSER_DEFAULT = 0x0,
+    BOWSER_1 = 0x1,
+    BOWSER_2 = 0x2
+};
+
+enum DonkeyKongLayers {
+    DK_DEFAULT = 0x0,
+    DK_1 = 0x1,
+    DK_2 = 0x2
+};
+
+enum WaluigiLayers {
+    WALUIGI_DEFAULT = 0x0,
+    WALUIGI_1 = 0x1,
+    WALUIGI_2 = 0x2
+};
+
+//MKWG Pages 9
+enum FunkyKongLayers {
+    FUNKY_KONG_DEFAULT = 0x0,
+    FUNKY_KONG_1 = 0x1,
+    FUNKY_KONG_2 = 0x2
+};
+
+enum DryBowserLayers {
+    DRY_BOWSER_DEFAULT = 0x0,
+    DRY_BOWSER_1 = 0x1,
+    DRY_BOWSER_2 = 0x2
+};
+
+enum DebugSettingKMP {
+    DEBUGSETTING_KMP_DISABLED = 0x0,
+    DEBUGSETTING_KMP_KEYCPS = 0x1,
+    DEBUGSETTING_KMP_ITPTS = 0x2
+};
+
+enum AlphaColor {
+    ALPHA_0F = 0x0F,
+    ALPHA_1F = 0x1F,
+    ALPHA_2F = 0x2F,
+    ALPHA_3F = 0x3F,
+    ALPHA_4F = 0x4F,
+    ALPHA_5F = 0x5F,
+    ALPHA_6F = 0x6F,
+    ALPHA_7F = 0x7F,
+    ALPHA_8F = 0x8F,
+    ALPHA_9F = 0x9F,
+    ALPHA_AF = 0xAF,
+    ALPHA_BF = 0xBF,
+    ALPHA_CF = 0xCF,
+    ALPHA_DF = 0xDF,
+    ALPHA_EF = 0xEF,
+    ALPHA_FF = 0xFF,
+};
+
+enum BlueColor {
+    BLUE_0F = 0x0F,
+    BLUE_1F = 0x1F,
+    BLUE_2F = 0x2F,
+    BLUE_3F = 0x3F,
+    BLUE_4F = 0x4F,
+    BLUE_5F = 0x5F,
+    BLUE_6F = 0x6F,
+    BLUE_7F = 0x7F,
+    BLUE_8F = 0x8F,
+    BLUE_9F = 0x9F,
+    BLUE_AF = 0xAF,
+    BLUE_BF = 0xBF,
+    BLUE_CF = 0xCF,
+    BLUE_DF = 0xDF,
+    BLUE_EF = 0xEF,
+    BLUE_FF = 0xFF,
+};
+
+enum GreenColor {
+    GREEN_0F = 0x0F,
+    GREEN_1F = 0x1F,
+    GREEN_2F = 0x2F,
+    GREEN_3F = 0x3F,
+    GREEN_4F = 0x4F,
+    GREEN_5F = 0x5F,
+    GREEN_6F = 0x6F,
+    GREEN_7F = 0x7F,
+    GREEN_8F = 0x8F,
+    GREEN_9F = 0x9F,
+    GREEN_AF = 0xAF,
+    GREEN_BF = 0xBF,
+    GREEN_CF = 0xCF,
+    GREEN_DF = 0xDF,
+    GREEN_EF = 0xEF,
+    GREEN_FF = 0xFF,
+};
+
+enum RedColor {
+    RED_0F = 0x0F,
+    RED_1F = 0x1F,
+    RED_2F = 0x2F,
+    RED_3F = 0x3F,
+    RED_4F = 0x4F,
+    RED_5F = 0x5F,
+    RED_6F = 0x6F,
+    RED_7F = 0x7F,
+    RED_8F = 0x8F,
+    RED_9F = 0x9F,
+    RED_AF = 0xAF,
+    RED_BF = 0xBF,
+    RED_CF = 0xCF,
+    RED_DF = 0xDF,
+    RED_EF = 0xEF,
+    RED_FF = 0xFF,
+};
+
+enum BlueSecondaryColor {
+    BLUESECONDARY_0F = 0x0F,
+    BLUESECONDARY_1F = 0x1F,
+    BLUESECONDARY_2F = 0x2F,
+    BLUESECONDARY_3F = 0x3F,
+    BLUESECONDARY_4F = 0x4F,
+    BLUESECONDARY_5F = 0x5F,
+    BLUESECONDARY_6F = 0x6F,
+    BLUESECONDARY_7F = 0x7F,
+    BLUESECONDARY_8F = 0x8F,
+    BLUESECONDARY_9F = 0x9F,
+    BLUESECONDARY_AF = 0xAF,
+    BLUESECONDARY_BF = 0xBF,
+    BLUESECONDARY_CF = 0xCF,
+    BLUESECONDARY_DF = 0xDF,
+    BLUESECONDARY_EF = 0xEF,
+    BLUESECONDARY_FF = 0xFF,
+};
+
+enum GreenSecondaryColor {
+    GREENSECONDARY_0F = 0x0F,
+    GREENSECONDARY_1F = 0x1F,
+    GREENSECONDARY_2F = 0x2F,
+    GREENSECONDARY_3F = 0x3F,
+    GREENSECONDARY_4F = 0x4F,
+    GREENSECONDARY_5F = 0x5F,
+    GREENSECONDARY_6F = 0x6F,
+    GREENSECONDARY_7F = 0x7F,
+    GREENSECONDARY_8F = 0x8F,
+    GREENSECONDARY_9F = 0x9F,
+    GREENSECONDARY_AF = 0xAF,
+    GREENSECONDARY_BF = 0xBF,
+    GREENSECONDARY_CF = 0xCF,
+    GREENSECONDARY_DF = 0xDF,
+    GREENSECONDARY_EF = 0xEF,
+    GREENSECONDARY_FF = 0xFF,
+};
+
+enum RedSecondaryColor {
+    REDSECONDARY_0F = 0x0F,
+    REDSECONDARY_1F = 0x1F,
+    REDSECONDARY_2F = 0x2F,
+    REDSECONDARY_3F = 0x3F,
+    REDSECONDARY_4F = 0x4F,
+    REDSECONDARY_5F = 0x5F,
+    REDSECONDARY_6F = 0x6F,
+    REDSECONDARY_7F = 0x7F,
+    REDSECONDARY_8F = 0x8F,
+    REDSECONDARY_9F = 0x9F,
+    REDSECONDARY_AF = 0xAF,
+    REDSECONDARY_BF = 0xBF,
+    REDSECONDARY_CF = 0xCF,
+    REDSECONDARY_DF = 0xDF,
+    REDSECONDARY_EF = 0xEF,
+    REDSECONDARY_FF = 0xFF,
+};
+
+enum AniAlphaColor {
+    ANIALPHA_0F = 0x0F,
+    ANIALPHA_1F = 0x1F,
+    ANIALPHA_2F = 0x2F,
+    ANIALPHA_3F = 0x3F,
+    ANIALPHA_4F = 0x4F,
+    ANIALPHA_5F = 0x5F,
+    ANIALPHA_6F = 0x6F,
+    ANIALPHA_7F = 0x7F,
+    ANIALPHA_8F = 0x8F,
+    ANIALPHA_9F = 0x9F,
+    ANIALPHA_AF = 0xAF,
+    ANIALPHA_BF = 0xBF,
+    ANIALPHA_CF = 0xCF,
+    ANIALPHA_DF = 0xDF,
+    ANIALPHA_EF = 0xEF,
+    ANIALPHA_FF = 0xFF,
+};
+
+enum AniBlueColor {
+    ANIBLUE_0F = 0x0F,
+    ANIBLUE_1F = 0x1F,
+    ANIBLUE_2F = 0x2F,
+    ANIBLUE_3F = 0x3F,
+    ANIBLUE_4F = 0x4F,
+    ANIBLUE_5F = 0x5F,
+    ANIBLUE_6F = 0x6F,
+    ANIBLUE_7F = 0x7F,
+    ANIBLUE_8F = 0x8F,
+    ANIBLUE_9F = 0x9F,
+    ANIBLUE_AF = 0xAF,
+    ANIBLUE_BF = 0xBF,
+    ANIBLUE_CF = 0xCF,
+    ANIBLUE_DF = 0xDF,
+    ANIBLUE_EF = 0xEF,
+    ANIBLUE_FF = 0xFF,
+};
+
+enum AniGreenColor {
+    ANIGREEN_0F = 0x0F,
+    ANIGREEN_1F = 0x1F,
+    ANIGREEN_2F = 0x2F,
+    ANIGREEN_3F = 0x3F,
+    ANIGREEN_4F = 0x4F,
+    ANIGREEN_5F = 0x5F,
+    ANIGREEN_6F = 0x6F,
+    ANIGREEN_7F = 0x7F,
+    ANIGREEN_8F = 0x8F,
+    ANIGREEN_9F = 0x9F,
+    ANIGREEN_AF = 0xAF,
+    ANIGREEN_BF = 0xBF,
+    ANIGREEN_CF = 0xCF,
+    ANIGREEN_DF = 0xDF,
+    ANIGREEN_EF = 0xEF,
+    ANIGREEN_FF = 0xFF,
+};
+
+enum AniRedColor {
+    ANIRED_0F = 0x0F,
+    ANIRED_1F = 0x1F,
+    ANIRED_2F = 0x2F,
+    ANIRED_3F = 0x3F,
+    ANIRED_4F = 0x4F,
+    ANIRED_5F = 0x5F,
+    ANIRED_6F = 0x6F,
+    ANIRED_7F = 0x7F,
+    ANIRED_8F = 0x8F,
+    ANIRED_9F = 0x9F,
+    ANIRED_AF = 0xAF,
+    ANIRED_BF = 0xBF,
+    ANIRED_CF = 0xCF,
+    ANIRED_DF = 0xDF,
+    ANIRED_EF = 0xEF,
+    ANIRED_FF = 0xFF,
+};
+
+enum SecAlpha {
+    SECALPHA_0F = 0x0F,
+    SECALPHA_1F = 0x1F,
+    SECALPHA_2F = 0x2F,
+    SECALPHA_3F = 0x3F,
+    SECALPHA_4F = 0x4F,
+    SECALPHA_5F = 0x5F,
+    SECALPHA_6F = 0x6F,
+    SECALPHA_7F = 0x7F,
+    SECALPHA_8F = 0x8F,
+    SECALPHA_9F = 0x9F,
+    SECALPHA_AF = 0xAF,
+    SECALPHA_BF = 0xBF,
+    SECALPHA_CF = 0xCF,
+    SECALPHA_DF = 0xDF,
+    SECALPHA_EF = 0xEF,
+    SECALPHA_FF = 0xFF,
+};
+
+enum SecBlue {
+    SECBLUE_0F = 0x0F,
+    SECBLUE_1F = 0x1F,
+    SECBLUE_2F = 0x2F,
+    SECBLUE_3F = 0x3F,
+    SECBLUE_4F = 0x4F,
+    SECBLUE_5F = 0x5F,
+    SECBLUE_6F = 0x6F,
+    SECBLUE_7F = 0x7F,
+    SECBLUE_8F = 0x8F,
+    SECBLUE_9F = 0x9F,
+    SECBLUE_AF = 0xAF,
+    SECBLUE_BF = 0xBF,
+    SECBLUE_CF = 0xCF,
+    SECBLUE_DF = 0xDF,
+    SECBLUE_EF = 0xEF,
+    SECBLUE_FF = 0xFF,
+};
+
+enum SecGreen {
+    SECGREEN_0F = 0x0F,
+    SECGREEN_1F = 0x1F,
+    SECGREEN_2F = 0x2F,
+    SECGREEN_3F = 0x3F,
+    SECGREEN_4F = 0x4F,
+    SECGREEN_5F = 0x5F,
+    SECGREEN_6F = 0x6F,
+    SECGREEN_7F = 0x7F,
+    SECGREEN_8F = 0x8F,
+    SECGREEN_9F = 0x9F,
+    SECGREEN_AF = 0xAF,
+    SECGREEN_BF = 0xBF,
+    SECGREEN_CF = 0xCF,
+    SECGREEN_DF = 0xDF,
+    SECGREEN_EF = 0xEF,
+    SECGREEN_FF = 0xFF,
+};
+
+enum SecRed {
+    SECRED_0F = 0x0F,
+    SECRED_1F = 0x1F,
+    SECRED_2F = 0x2F,
+    SECRED_3F = 0x3F,
+    SECRED_4F = 0x4F,
+    SECRED_5F = 0x5F,
+    SECRED_6F = 0x6F,
+    SECRED_7F = 0x7F,
+    SECRED_8F = 0x8F,
+    SECRED_9F = 0x9F,
+    SECRED_AF = 0xAF,
+    SECRED_BF = 0xBF,
+    SECRED_CF = 0xCF,
+    SECRED_DF = 0xDF,
+    SECRED_EF = 0xEF,
+    SECRED_FF = 0xFF,
+};
+
+
+enum Colors {
+    COLORS_DEFAULT = 0x0,
+    COLORS_MKWG = 0x1,
+    COLORS_CUSTOM = 0x2,
+};
+
+enum AniColors {
+    SETTINGS_ANIMATIONCOLORS_OFF = 0x0,
+    SETTINGS_ANIMATIONCOLORS_DEFAULT = 0x1,
+    SETTINGS_ANIMATIONCOLORS_MKWG = 0x2,
+    SETTINGS_ANIMATIONCOLORS_CUSTOM = 0x3,
+};
+enum PosColors {
+    SETTINGS_POSITIONCOLORS_DEFAULT = 0x0,
+    SETTINGS_POSITIONCOLORS_MKWG = 0x1,
+    SETTINGS_POSITIONCOLORS_CUSTOM = 0x2,
+};
+
+enum CountDownColors {
+    SETTINGS_COUNTDOWNCOLORS_DEFAULT = 0x0,
+    SETTINGS_COUNTDOWNCOLORS_MKWG = 0x1,
+    SETTINGS_COUNTDOWNCOLORS_CUSTOM = 0x2,
+};
+
+//MKWG ORIGINAL SETTINGS
+
+enum MKWGSettingVehicleMode {
+    MKWGSETTING_VEHICLEMODE_REGULAR,
+    MKWGSETTING_VEHICLEMODE_ALLINSIDE,
+    MKWGSETTING_VEHICLEMODE_BIKEINSIDE,
+    MKWGSETTING_VEHICLEMODE_ALLOUTSIDE,
+    MKWGSETTING_VEHICLEMODE_RIIBALANCED,
+    MKWGSETTING_VEHICLEMODE_GIMMICK,
+};
+
+enum MKWGSettingVehicleRestrict {
+    MKWGSETTING_VEHICLERESTRICT_DEFAULT,
+    MKWGSETTING_VEHICLERESTRICT_KARTS,
+    MKWGSETTING_VEHICLERESTRICT_BIKES,
+};
+
+enum MKWGSettingCharRestrict {
+    MKWGSETTING_CHARRESTRICT_DEFAULT,
+    MKWGSETTING_CHARRESTRICT_LIGHT,
+    MKWGSETTING_CHARRESTRICT_MEDIUM,
+    MKWGSETTING_CHARRESTRICT_HEAVY,
+
+};
+
+enum MKWGSettingItemMode {
+    MKWGSETTING_ITEMMODE_REGULAR,
+    MKWGSETTING_ITEMMODE_MUSHROOM,
+    MKWGSETTING_ITEMMODE_RANDOM,
+    MKWGSETTING_ITEMMODE_BLASTBLITZ,
+};
+
+enum MKWGSettingInputDisplay {
+    MKWGSETTING_INPUTDISPLAY_DISABLED,
+    MKWGSETTING_INPUTDISPLAY_ENABLED,
+};
+
+enum MKWGSettingThunderCloud {
+    MKWGSETTING_THUNDERCLOUD_SHRINK,
+    MKWGSETTING_THUNDERCLOUD_MEGA,
+    MKWGSETTING_THUNDERCLOUD_ACTIVATION,
+};
+
+enum HostSettingForceVehicleMode {
+    MKWGSETTING_FORCE_VEHICLEMODE_REGULAR,
+    MKWGSETTING_FORCE_VEHICLEMODE_ALLINSIDE,
+    MKWGSETTING_FORCE_VEHICLEMODE_BIKEINSIDE,
+    MKWGSETTING_FORCE_VEHICLEMODE_ALLOUTSIDE,
+    MKWGSETTING_FORCE_VEHICLEMODE_RIIBALANCED,
+    MKWGSETTING_FORCE_VEHICLEMODE_GIMMICK,
+};
+
+enum MKWGSettingItemBoxRespawn {
+    MKWGSETTING_ITEMBOX_NORMAL,
+    MKWGSETTING_ITEMBOX_FASTRESPAWN,
+};
+
+enum MKWGSettingHardCPUS {
+    MKWGSETTING_HARDCPUS_DISABLED,
+    MKWGSETTING_HARDCPUS_ENABLED,
+};
+enum MKWGSettingChangeFPSMode {
+    MKWGSETTING_FPS_60,
+    MKWGSETTING_FPS_30,
+};
+
+enum MKWGSetting150BDrifting {
+    MKWGSETTING_150_BDRIFTINGOFF,
+    MKWGSETTING_150_BDRIFTINGON
+};
+
+enum MKWGSettingAllow150BrakeDrift {
+    MKWGSETTING_150_BRAKEDRIFT_OFF,
+    MKWGSETTING_150_BRAKEDRIFT_ON
+};
+
+enum MKWGSettingFallFast {
+    MKWGSETTING_FALLFAST_DISABLED,
+    MKWGSETTING_FALLFAST_ENABLED
+};
+
+enum MKWGSettingAllow150FallFast {
+    MKWGSETTING_150_FALLFASTOFF,
+    MKWGSETTING_150_FALLFASTON
+};
+
+enum MKWGSettingDriftAnywhere {
+    MKWGSETTING_DANYWHERE_DISABLED,
+    MKWGSETTING_DANYWHERE_ENABLED
+};
+
+enum MKWGSettingAllowDriftAnywhere {
+    MKWGSETTING_ALLOW_DANYWHEREOFF,
+    MKWGSETTING_ALLOW_DANYWHEREON
+};
+
+enum MKWGSettingFlicker {
+    MKWGSETTING_FLICKER_DISABLED,
+    MKWGSETTING_FLICKER_ENABLED
+};
+
+enum MKWGSettingBlur {
+    MKWGSETTING_BLUR_DISABLED,
+    MKWGSETTING_BLUR_ENABLED
+};
+
+enum MKWGSettingUltras {
+    MKWGSETTING_ULTRAS_ENABLED,
+    MKWSGSETTING_ULTRAS_DISABLED
+};
+
+enum MKWGSettingBrakeDrift {
+    MKWGSETTING_BRAKEDRIFT_DISABLED,
+    MKWGSETTING_BRAKEDRIFT_ENABLED,
+};
+
+enum MKWGSettingFlyingBlooper {
+    MKWGSETTING_FLYINGBLOOP_BLOOPER,
+    MKWGSETTING_FLYINGBLOOP_FEATHER
+};
+
+enum MKWGSettingCustomCC {
+    MKWGSETTING_CUSTOMCC_50,
+    MKWGSETTING_CUSTOMCC_100,
+    MKWGSETTING_CUSTOMCC_400,
+    MKWGSETTING_CUSTOMCC_99999,
+};
+
+enum MKWGSettingInvisWalls {
+    MKWGSETTING_INVISWALLS_ENABLED,
+    MKWGSETTING_INVISWALLS_DISABLED
+};
+
+enum MKWGSettingLaps {
+    MKWGSETTING_LAPS_DEFAULT,
+    MKWGSETTING_LAPS_1,
+    MKWGSETTING_LAPS_2,
+    MKWGSETTING_LAPS_3,
+    MKWGSETTING_LAPS_4,
+    MKWGSETTING_LAPS_5,
+};
+
+}//namespace Pulsar
+
+
+
+#endif
