@@ -50,7 +50,7 @@ static void EarlyPhysicsUpdate(Kart::Physics& physics, float dt, float maxSpeed,
     if (KAE.teleported) RotateSpeedAfterTP(*movement, physics, playerId);
     if (KAE.portal) Teleportation(physics, playerId);
 
-    if (!KAE.prevOnRail && KAE.ground) Stopper(physics);
+    if (KAE.onRail && !KAE.prevOnRail && KAE.ground) Stopper(physics);
 
     PrevPhysicsState(playerId);
 
