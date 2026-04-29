@@ -13,7 +13,8 @@
 
 namespace Pulsar {
 namespace Race {
-//Credit CLF78 and Stebler, this is mostly a port of their version with slightly different hooks and proper arguments naming since this is C++
+// Credit CLF78 and Stebler, this is mostly a port of their version with slightly different hooks and proper arguments naming since this is C++
+// Credit Saucy for making the setting Blooper / Feather
 void UseFeather(Item::Player& itemPlayer) {
     const Kart::Pointers* pointers = itemPlayer.pointers;
     pointers->kartMovement->specialFloor |= 0x4; //JumpPad
@@ -53,9 +54,10 @@ const GameMode gameMode = Racedata::sInstance->menusScenario.settings.gamemode;
 kmCall(0x80796d8c, ReplaceBlooperUseOtherPlayers); //replaces the small blooper model when someone uses a blooper with a feather use
 
 //kmWrite32(0x805b68d8, 0x7DE97B78); //mr r9, r15 to get playercollision
+
+// No invisible walls setting added [Saucy]
 static bool ConditionalIgnoreInvisibleWalls(float radius, CourseMgr& mgr, const Vec3& position, const Vec3& prevPosition,
-    KCLBitfield acceptedFlags, CollisionInfo* info, KCLTypeHolder& kclFlags)
-{
+    KCLBitfield acceptedFlags, CollisionInfo* info, KCLTypeHolder& kclFlags) {
 const RacedataScenario& scenario = Racedata::sInstance->racesScenario;
 const GameMode mode = scenario.settings.gamemode;
 const GameMode gameMode = Racedata::sInstance->menusScenario.settings.gamemode;

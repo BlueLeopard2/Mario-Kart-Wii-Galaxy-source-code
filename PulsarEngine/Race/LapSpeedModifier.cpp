@@ -6,63 +6,63 @@
 #include <MarioKartWii/RKNet/RKNetController.hpp>
 #include <MarioKartWii/Kart/KartValues.hpp>
 #include <MarioKartWii/Kart/KartMovement.hpp>
+#include <MarioKartWii/Kart/KartManager.hpp>
 #include <MarioKartWii/Lakitu/LakituManager.hpp>
 #include <MarioKartWii/Item/Obj/ObjProperties.hpp>
 #include <MarioKartWii/3D/Model/ModelDirector.hpp>
+#include <MarioKartWii/System/Random.hpp>
+#include <MKWG.hpp>
+#include <KAE/KMPAREAExpander.hpp>
 #include <Race/200ccParams.hpp>
 #include <PulsarSystem.hpp>
-#include <MKWG.hpp>
+
+
 
 namespace Pulsar {
 namespace Race {
 //Mostly a port of MrBean's version with better hooks and arguments documentation
+
+// Custom Lap Count [BlueLeopard]
 RaceinfoPlayer* LoadCustomLapCount(RaceinfoPlayer* player, u8 id) {
+    Random rng;
     const RacedataScenario& scenario = Racedata::sInstance->racesScenario;
     const GameMode mode = scenario.settings.gamemode;
     const u32 roomType = RKNet::Controller::sInstance->roomType;
 
-    u8 lapCount = 3; // Fallback
+    u8 lapCount = 3;
     if (KMP::Manager::sInstance && KMP::Manager::sInstance->stgiSection && KMP::Manager::sInstance->stgiSection->holdersArray[0]) {
         lapCount = KMP::Manager::sInstance->stgiSection->holdersArray[0]->raw->lapCount;
     }
 
-    // Online friend rooms — use host’s lap setting
-    if (roomType == RKNet::ROOMTYPE_FROOM_HOST || roomType == RKNet::ROOMTYPE_FROOM_NONHOST) {
+    if (roomType == RKNet::ROOMTYPE_VS_WW || roomType == RKNet::ROOMTYPE_BT_WW || roomType == RKNet::ROOMTYPE_VS_REGIONAL || roomType == RKNet::ROOMTYPE_BT_REGIONAL || 
+        mode == MODE_TIME_TRIAL || mode == MODE_GHOST_RACE) lapCount = lapCount;
+    
+    else if (roomType == RKNet::ROOMTYPE_FROOM_HOST || roomType == RKNet::ROOMTYPE_FROOM_NONHOST) {
         if (System::sInstance->IsContext(Pulsar::PULSAR_LAPS1))       lapCount = 1;
         else if (System::sInstance->IsContext(Pulsar::PULSAR_LAPS2))  lapCount = 2;
         else if (System::sInstance->IsContext(Pulsar::PULSAR_LAPS3))  lapCount = 3;
         else if (System::sInstance->IsContext(Pulsar::PULSAR_LAPS4))  lapCount = 4;
         else if (System::sInstance->IsContext(Pulsar::PULSAR_LAPS5))  lapCount = 5;
-        else /* Default */                                       lapCount = lapCount;
+        else if (System::sInstance->IsContext(Pulsar::PULSAR_LAPS5))  lapCount = rng.NextLimited(5) + 1;
+        else                                                          lapCount = lapCount;
     }
-    // Worldwide, regionals, TTs, ghosts: force track lap count
-    else if (
-        roomType == RKNet::ROOMTYPE_VS_WW || roomType == RKNet::ROOMTYPE_BT_WW ||
-        roomType == RKNet::ROOMTYPE_VS_REGIONAL || roomType == RKNet::ROOMTYPE_BT_REGIONAL ||
-        mode == MODE_TIME_TRIAL || mode == MODE_GHOST_RACE) {
-        lapCount = lapCount;
-    }
-    // Offline: use user setting
+    
     else {
-        u32 setting = Pulsar::Settings::Mgr::Get().GetUserSettingValue(
-            static_cast<Pulsar::Settings::UserType>(Pulsar::Settings::SETTINGSTYPE_MKWG2), 
-            Pulsar::SETTINGMKWG_LAPCOUNT);
+        u32 setting = Pulsar::Settings::Mgr::Get().GetUserSettingValue(static_cast<Pulsar::Settings::UserType>(Pulsar::Settings::SETTINGSTYPE_MKWG2), Pulsar::SETTINGMKWG_LAPCOUNT);
         switch (setting) {
             case Pulsar::MKWGSETTING_LAPS_1: lapCount = 1; break;
             case Pulsar::MKWGSETTING_LAPS_2: lapCount = 2; break;
             case Pulsar::MKWGSETTING_LAPS_3: lapCount = 3; break;
             case Pulsar::MKWGSETTING_LAPS_4: lapCount = 4; break;
             case Pulsar::MKWGSETTING_LAPS_5: lapCount = 5; break;
-            default:                                       break; // already track default
+            case Pulsar::MKWGSETTING_LAPS_RANDOM: lapCount = rng.NextLimited(5) + 0x1; break;
+            default:                                       break;
         }
     }
 
-    // Set the lap count
     Racedata::sInstance->racesScenario.settings.lapCount = lapCount;
     return new (player) RaceinfoPlayer(id, lapCount);
 }
-
-// Safe call — happens just before players are created, after race setup is ready
 kmCall(0x805328D4, LoadCustomLapCount);
 
 
@@ -74,6 +74,7 @@ void DisplayCorrectLap(AnmTexPatHolder* texPat) {
 }
 kmCall(0x80723d70, DisplayCorrectLap);
 
+// Custom CC [Saucy, BlueLeopard]
 Kart::Stats* ApplySpeedModifier(KartId kartId, CharacterId characterId) {
     union SpeedModConv {
         float speedMod;
@@ -82,12 +83,12 @@ Kart::Stats* ApplySpeedModifier(KartId kartId, CharacterId characterId) {
 
     Kart::Stats* stats = Kart::ComputeStats(kartId, characterId); 
     const GameMode gameMode = Racedata::sInstance->menusScenario.settings.gamemode;
+
     SpeedModConv speedModConv;
     speedModConv.kmpValue = (KMP::Manager::sInstance->stgiSection->holdersArray[0]->raw->speedMod << 16);
     if(speedModConv.speedMod == 0.0f) speedModConv.speedMod = 1.0f;
 
     float factor = 1.0f;
-
     
     Item::greenShellSpeed               = 105.0f;                     
     Item::redShellInitialSpeed          = 75.0f;                  
@@ -101,7 +102,7 @@ Kart::Stats* ApplySpeedModifier(KartId kartId, CharacterId characterId) {
     Kart::megaTCSpeed                   = 95.0f;
 
     
-
+    // hardSpeedCap is now calculated correctly [BlueLeopard]
     if (System::sInstance->IsContext(PULSAR_200) && Racedata::sInstance->racesScenario.settings.engineClass == CC_100) {
         if (gameMode != MODE_BATTLE && gameMode != MODE_PUBLIC_BATTLE && gameMode != MODE_PRIVATE_BATTLE && RKNet::Controller::sInstance->roomType != RKNet::ROOMTYPE_VS_WW && RKNet::Controller::sInstance->roomType != RKNet::ROOMTYPE_BT_WW) {
             factor = 1.6667f;
@@ -198,12 +199,12 @@ Kart::Stats* ApplySpeedModifier(KartId kartId, CharacterId characterId) {
     stats->standard_acceleration_as[1] *= factor;
     stats->standard_acceleration_as[2] *= factor;
     stats->standard_acceleration_as[3] *= factor;        
-    if (MKWG::System::Is99999cc() && Racedata::sInstance->racesScenario.settings.engineClass == CC_50) {
-        Kart::minDriftSpeedRatio = 0.55f;
-    }
+    
+    if (MKWG::System::Is99999cc() && Racedata::sInstance->racesScenario.settings.engineClass == CC_50) Kart::minDriftSpeedRatio = 0.55f;
     else Kart::minDriftSpeedRatio = 0.55f * (1.0f / factor); 
     Kart::unknown_70 = 70.0f * factor;
     Kart::regularBoostAccel = 3.0f * factor;
+
     return stats;
 }
 kmCall(0x8058f670, ApplySpeedModifier);

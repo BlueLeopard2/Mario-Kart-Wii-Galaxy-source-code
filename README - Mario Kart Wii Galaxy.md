@@ -1,1 +1,0 @@
-Hi! Thank you for checking out the source code of Mario Kart Wii Galaxy. Please read the LICENSE file in the folder PulsarEngine/KAE before you use the KAE (KMP AREA Expander) in your own pack, as it is under a special license.

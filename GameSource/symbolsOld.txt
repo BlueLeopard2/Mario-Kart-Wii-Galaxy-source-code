@@ -9766,6 +9766,7 @@ append__Q23EGG12ProcessMeterFPQ33EGG12ProcessMeter10CpuMonitor = 0x80238f48
 draw__Q23EGG12ProcessMeterFv               = 0x80239338
 __dt__Q23EGG12ProcessMeterFv = 0x80239628
 __vt__Q33EGG12ProcessMeter10CpuMonitor = 0x802a3d60
+
 #Quatf
 Set__Q23EGG5QuatfFffff = 0x80239dfc
 RotateVector__Q23EGG5QuatfFRCQ23EGG8Vector3fRQ23EGG8Vector3f = 0x8023a2d0

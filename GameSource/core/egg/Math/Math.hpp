@@ -10,7 +10,7 @@ float Sqrt(float value); //8022f80c
 float FrSqrt(float value); //8022f85c
 //angles in rad
 float Sin(float angle); //8022f860
-float Cos(float angle); //8022f86c in rad
+float Cos(float angle); //8022f86c
 float Tan(float angle); //8022f878
 
 float Asin(float value); //8022f89c

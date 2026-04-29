@@ -1119,6 +1119,7 @@ enum MKWGSettingLaps {
     MKWGSETTING_LAPS_3,
     MKWGSETTING_LAPS_4,
     MKWGSETTING_LAPS_5,
+    MKWGSETTING_LAPS_RANDOM,
 };
 
 }//namespace Pulsar

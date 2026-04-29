@@ -58,8 +58,8 @@ void LoadCorrectTCBRRES(Item::ObjKumo& objKumo, const char* mdlName, const char*
 }
 kmCall(0x807af568, LoadCorrectTCBRRES);
 
-//TCOnActivation, BlueLeopard, Erythtini
-kmRuntimeUse(0x80798004);
+// TCOnActivation [BlueLeopard]
+kmRuntimeUse(0x80798004); //Thundercloud Activation Address [Erythtiny]
 static void UpdateManualTCActivation() { 
     const RacedataScenario& scenario = Racedata::sInstance->racesScenario;
     const GameMode mode = scenario.settings.gamemode;

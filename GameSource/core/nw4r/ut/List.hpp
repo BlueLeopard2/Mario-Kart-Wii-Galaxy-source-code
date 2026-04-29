@@ -4,7 +4,6 @@
 namespace nw4r {
 namespace ut {
 
-
 struct Link {
     void* prev, * next;
 }; // Total size 0x8

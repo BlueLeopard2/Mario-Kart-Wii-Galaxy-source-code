@@ -352,7 +352,7 @@ public:
     u32 wheelieTimer;
     u8 field_0x2AC; //could be a wheelie flag (0 = not in wheelie, 1 = in wheelie), set to 1 when starting wheelie and 0 when ending wheelie?
     u8 unknown_0x2ad[0x2b4 - 0x2ad];
-    u16 wheelietimer2; //from what i know the same as wheelieTimer, but stored as a ushort
+    u16 wheelietimer2; //from what I know the same as wheelieTimer, but stored as a ushort
     u16 wheelieCooldown;
     u8 unknown_0x254[0x2c0 - 0x2b8];
     void* turnParams;

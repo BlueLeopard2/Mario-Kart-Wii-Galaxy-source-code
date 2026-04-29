@@ -2,12 +2,12 @@ KMP AREA Expander License
 Copyright (c) 2026 BlueLeopard
 
 Permission is granted to use, compile, and distribute the unmodified
-files contained in this folder in any project, including commercial projects.
+files contained in the folder PulsarEngine/KAE in any project, including commercial projects.
 
 Non-functional modifications are permitted. Non-functional modifications
 are defined as changes that do not alter runtime behavior, logic,
 algorithms, data flow, interfaces, or observable output.
-Examples include renaming namespaces, formatting changes, comments,
+Examples of non-functional modifications include renaming namespaces, formatting changes, comments,
 or integration-related identifier adjustments.
 
 Any functional modification, including but not limited to altering

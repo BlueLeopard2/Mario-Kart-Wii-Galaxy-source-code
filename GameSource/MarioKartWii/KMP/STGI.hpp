@@ -11,7 +11,7 @@ struct STGI {
     u32 flareColor; //0x4
     u8 flareAlpha; //0x8
     u8 padding; //0x9
-    u16 speedMod; //0xA cusually 0 but for the code 
+    u16 speedMod; //0xA usually 0 but for the code 
 }; //total size 0xc
 
 typedef struct KMPBlock<STGI> STGIBlock;

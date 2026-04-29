@@ -58,6 +58,7 @@ static void BeforeROOMSend(RKNet::PacketHolder<PulROOM>* packetHolder, PulROOM* 
         const u8 laps3 = settings.GetUserSettingValue(Settings::SETTINGSTYPE_MKWG2, SETTINGMKWG_LAPCOUNT) == MKWGSETTING_LAPS_3;
         const u8 laps4 = settings.GetUserSettingValue(Settings::SETTINGSTYPE_MKWG2, SETTINGMKWG_LAPCOUNT) == MKWGSETTING_LAPS_4;
         const u8 laps5 = settings.GetUserSettingValue(Settings::SETTINGSTYPE_MKWG2, SETTINGMKWG_LAPCOUNT) == MKWGSETTING_LAPS_5;
+        const u8 lapsRandom = settings.GetUserSettingValue(Settings::SETTINGSTYPE_MKWG2, SETTINGMKWG_LAPCOUNT) == MKWGSETTING_LAPS_RANDOM;
         const u8 NoInvisWalls = settings.GetUserSettingValue(Settings::SETTINGSTYPE_MKWG2, SETTINGMKWG_INVIS_WALLS) == MKWGSETTING_INVISWALLS_DISABLED;
         //const u8 ottUMT = settings.GetSettingValue(Settings::SETTINGSTYPE_OTT, SETTINGOTT_ALLOWUMTS) == OTTSETTING_UMTS_ENABLED;
 
@@ -90,6 +91,7 @@ static void BeforeROOMSend(RKNet::PacketHolder<PulROOM>* packetHolder, PulROOM* 
       | (static_cast<u64>(laps3) << PULSAR_LAPS3)
       | (static_cast<u64>(laps4) << PULSAR_LAPS4)
       | (static_cast<u64>(laps5) << PULSAR_LAPS5)
+      | (static_cast<u64>(lapsRandom) << PULSAR_LAPSRANDOM)
       | (static_cast<u64>(flyingBloop) << PULSAR_FLYINGBLOOP)
       | (static_cast<u64>(settings.GetUserSettingValue(Settings::SETTINGSTYPE_MKWG2, SETTINGMKWG_THUNDERCLOUD)) << PULSAR_THUNDERCLOUD)
       | (static_cast<u64>(settings.GetSettingValue(Settings::SETTINGSTYPE_HOST, SETTINGHOST_CC)) << PULSAR_50)
@@ -157,6 +159,7 @@ static void AfterROOMReception(const RKNet::PacketHolder<PulROOM>* packetHolder,
     bool isLaps3 = settings.GetUserSettingValue(Settings::SETTINGSTYPE_MKWG2, SETTINGMKWG_LAPCOUNT) == MKWGSETTING_LAPS_3;
     bool isLaps4 = settings.GetUserSettingValue(Settings::SETTINGSTYPE_MKWG2, SETTINGMKWG_LAPCOUNT) == MKWGSETTING_LAPS_4;
     bool isLaps5 = settings.GetUserSettingValue(Settings::SETTINGSTYPE_MKWG2, SETTINGMKWG_LAPCOUNT) == MKWGSETTING_LAPS_5;
+    bool isLapsRandom = settings.GetUserSettingValue(Settings::SETTINGSTYPE_MKWG2, SETTINGMKWG_LAPCOUNT) == MKWGSETTING_LAPS_RANDOM;
     bool isNoInvisWalls = settings.GetUserSettingValue(Settings::SETTINGSTYPE_MKWG2, SETTINGMKWG_INVIS_WALLS) == MKWGSETTING_INVISWALLS_DISABLED;
         
     u64 newContext = 0;
@@ -177,10 +180,11 @@ static void AfterROOMReception(const RKNet::PacketHolder<PulROOM>* packetHolder,
         isLaps3 = newContext & (1ULL << PULSAR_LAPS3);
         isLaps4 = newContext & (1ULL << PULSAR_LAPS4);
         isLaps5 = newContext & (1ULL << PULSAR_LAPS5);
+        isLapsRandom = newContext & (1ULL << PULSAR_LAPSRANDOM);
         isNoInvisWalls = newContext & (1ULL << PULSAR_NOINVISWALLS);
     netMgr.hostContext = newContext;
 
-    u64 context = (static_cast<u64>(isCharRestrictLight) << PULSAR_CHARRESTRICTLIGHT) | (static_cast<u64>(isCharRestrictMedium) << PULSAR_CHARRESTRICTMEDIUM) | (static_cast<u64>(isCharRestrictHeavy) << PULSAR_CHARRESTRICTHEAVY) | (static_cast<u64>(isKartRestrictKart) << PULSAR_KARTRESTRICT) | (static_cast<u64>(isKartRestrictBike) << PULSAR_BIKERESTRICT) | (static_cast<u64>(isItemModeRandom) << PULSAR_ITEMMODERANDOM) | (static_cast<u64>(isItemModeMushroom) << PULSAR_ITEMMODEMUSHROOM) | (static_cast<u64>(isItemModeBlastBlitz) << PULSAR_ITEMMODEBLASTBLITZ) | (static_cast<u64>(isFlyingBloop) << PULSAR_FLYINGBLOOP) | (static_cast<u64>(isLapsDefault) << PULSAR_LAPSDEFAULT) | (static_cast<u64>(isLaps1) << PULSAR_LAPS1) | (static_cast<u64>(isLaps2) << PULSAR_LAPS2) | (static_cast<u64>(isLaps3) << PULSAR_LAPS3) | (static_cast<u64>(isLaps4) << PULSAR_LAPS4) | (static_cast<u64>(isNoInvisWalls) << PULSAR_NOINVISWALLS);
+    u64 context = (static_cast<u64>(isCharRestrictLight) << PULSAR_CHARRESTRICTLIGHT) | (static_cast<u64>(isCharRestrictMedium) << PULSAR_CHARRESTRICTMEDIUM) | (static_cast<u64>(isCharRestrictHeavy) << PULSAR_CHARRESTRICTHEAVY) | (static_cast<u64>(isKartRestrictKart) << PULSAR_KARTRESTRICT) | (static_cast<u64>(isKartRestrictBike) << PULSAR_BIKERESTRICT) | (static_cast<u64>(isItemModeRandom) << PULSAR_ITEMMODERANDOM) | (static_cast<u64>(isItemModeMushroom) << PULSAR_ITEMMODEMUSHROOM) | (static_cast<u64>(isItemModeBlastBlitz) << PULSAR_ITEMMODEBLASTBLITZ) | (static_cast<u64>(isFlyingBloop) << PULSAR_FLYINGBLOOP) | (static_cast<u64>(isLapsDefault) << PULSAR_LAPSDEFAULT) | (static_cast<u64>(isLaps1) << PULSAR_LAPS1) | (static_cast<u64>(isLaps2) << PULSAR_LAPS2) | (static_cast<u64>(isLaps3) << PULSAR_LAPS3) | (static_cast<u64>(isLaps4) << PULSAR_LAPS4) | (static_cast<u64>(isLaps5) << PULSAR_LAPS5) | (static_cast<u64>(isLapsRandom) << PULSAR_LAPSRANDOM) | (static_cast<u64>(isNoInvisWalls) << PULSAR_NOINVISWALLS);
     Pulsar::System::sInstance->context = context;
         
         //Also exit the settings page to prevent weird graphical artefacts

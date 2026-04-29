@@ -21,7 +21,7 @@ class Mgr;
 
 class ConfigFile;
 
-
+// Enum can now hold 64 members, changed were also made in pulsarSystem.cpp and pulROOM.cpp and possibly some other files [Saucy]
 enum Context {
     PULSAR_CT = 0,
     PULSAR_50,
@@ -67,6 +67,7 @@ enum Context {
     PULSAR_LAPS3,
     PULSAR_LAPS4,
     PULSAR_LAPS5,
+    PULSAR_LAPSRANDOM,
     PULSAR_CONTEXT_COUNT,
 };
 
@@ -179,7 +180,6 @@ class System {
         }
         
     };
-    } //namespace Pulsar
+} //namespace Pulsar
     
-    #endif
-
+#endif

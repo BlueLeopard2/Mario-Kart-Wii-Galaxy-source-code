@@ -1,6 +1,6 @@
 #ifndef _C_MATH_
 #define _C_MATH_
-#define PI 3.14159265358979323f
+#define PI 3.141592653589793238f
 #define PIx2 (PI * 2.0f)
 
 #ifdef __INTELLISENSE__

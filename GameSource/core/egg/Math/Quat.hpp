@@ -20,15 +20,15 @@ struct Quatf : nw4r::math::QUAT {
     void Inverse(Quatf& dest); //8023a210
     
     Quatf operator*(const Quatf& rhs) const {
-    Quatf result;
-    result.x = w * rhs.x + x * rhs.w + y * rhs.z - z * rhs.y;
-    result.y = w * rhs.y - x * rhs.z + y * rhs.w + z * rhs.x;
-    result.z = w * rhs.z + x * rhs.y - y * rhs.x + z * rhs.w;
-    result.w = w * rhs.w - x * rhs.x - y * rhs.y - z * rhs.z;
-    return result;
-}
-
+        Quatf result;
+        result.x = w * rhs.x + x * rhs.w + y * rhs.z - z * rhs.y;
+        result.y = w * rhs.y - x * rhs.z + y * rhs.w + z * rhs.x;
+        result.z = w * rhs.z + x * rhs.y - y * rhs.x + z * rhs.w;
+        result.w = w * rhs.w - x * rhs.x - y * rhs.y - z * rhs.z;
+        return result;
+    }
 };
+
 }//namespace EGG
 
 
