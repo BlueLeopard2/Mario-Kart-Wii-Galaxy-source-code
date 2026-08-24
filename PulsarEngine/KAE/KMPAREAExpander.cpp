@@ -246,7 +246,7 @@ bool UpdateAREAFlag(s16 areaIndex, bool prevFlag, u8 playerId, u8 mechNum) {
 
     if (padding & 0x100 && !KAE.ground) return false; // only when on ground
     if (padding & 0x200 && (KAE.ground || !KAE.air20)) return false; // only when in air
-    if (padding & 0x800 && KAE.justTricked) return false;ed
+    if (padding & 0x800 && KAE.justTricked) return false;
     //if (checkpointCheck < raceInfo->checkpoint && checkpointCheck != 0) return false;
     if (targetKCL < 0x1F) {
         if ((padding & 0x4000) && KAE.kclFlag != 0) KAE.flagKCLStay[mechNum] = ((KAE.kclFlag & targetKCLFlag) != 0); // if 14th bit is true, mechanic stays activated until different KCL type is touched
