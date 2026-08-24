@@ -9,6 +9,7 @@
 #include <Settings/SettingsParam.hpp>
 #include <MarioKartWii/Archive/ArchiveMgr.hpp>
 #include <MarioKartWii/Kart/KartMovement.hpp>
+#include <KAE/KMPAREAExpander.hpp>
 
 
 namespace Pulsar {
@@ -93,6 +94,11 @@ const GameMode gameMode = Racedata::sInstance->menusScenario.settings.gamemode;
             }
         }
     }
+    // Anti-gravity: wheel hitboxes must fall along floor normal, not world -Y
+    const u8 playerId = wheelPhysicsHolder->GetPlayerIdx();
+    MKWG::Race::KMPAREAExpander& KAE = MKWG::Race::KMPAREAExpand[playerId];
+    if (KAE.antiGrav) gravityVector = KAE.antiGravVec;
+
     wheelPhysicsHolder->Update(gravityVector, wheelMat, unk_float);
 }
 kmCall(0x805973b4, ConditionalFastFallingWheels);

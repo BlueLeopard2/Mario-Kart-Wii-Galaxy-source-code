@@ -8,6 +8,9 @@
 #include <MarioKartWii/Kart/KartMovement.hpp>
 #include <MarioKartWii/Kart/KartPhysics.hpp>
 #include <MarioKartWii/Kart/KartStatus.hpp>
+#include <KAE/KMPAREAExpander.hpp>
+
+// This file holds recurring math stuff, not that interesting except for maybe the last couple
 
 // general math
 static inline float Clamp(float x, float minVal, float maxVal) {
@@ -20,17 +23,76 @@ static inline float Abs(float x) {
     return x < 0.0f ? -x : x;
 }
 
-static inline float Pow(float x) {
-    return 1.0f + x * (0.69314718f + x * (0.24022651f));
+static inline float Pow(float x, int y) {
+    float z = 1;
+
+    if (y < 0) {
+        x = 1.0f / x;
+        y = -y;
+    }
+
+    for (int i = 0; i < y; i++) {
+        z *= x;
+    }
+    return z;
 }
 
-static inline float fmaxf(float a, float b) {
+static inline float Max(float a, float b) {
     return (a > b) ? a : b;
 }
 
+static inline float Min(float a, float b) {
+    return (a < b) ? a : b;
+}
+
 // Vector math
+static inline Vec3 WorldUp() {
+    return Vec3(0.0f, 1.0f, 0.0f);
+}
+
+static inline Vec3 AddVec(const Vec3& lhs, const Vec3& rhs) {
+    return Vec3(lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z);
+}
+
+static inline Vec3 SubVec(const Vec3& lhs, const Vec3& rhs) {
+    return Vec3(lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z);
+}
+
 static inline float Dot(const Vec3& a, const Vec3& b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+static inline float VecLength(const Vec3& vec) {
+    return EGG::Math::Sqrt(Dot(vec, vec));
+}
+
+static inline Vec3 MultiplyVecByFloat(const Vec3 a, const float b) {
+    return Vec3(
+        a.x * b,
+        a.y * b,
+        a.z * b
+    );
+    
+}
+
+static inline Vec3 MultiplyVecByVec(const Vec3 a, const Vec3 b) {
+    return Vec3(
+        a.x * b.x,
+        a.y * b.y,
+        a.z * b.z
+    );
+}
+
+static inline Vec3 Cross(const Vec3& a, const Vec3& b) {
+    return Vec3(
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+    );
+}
+
+static inline float LengthSq(const Vec3& a) {
+    return a.x * a.x + a.y * a.y + a.z * a.z;
 }
 
 // Quat math
@@ -115,17 +177,50 @@ static inline Vec3 RotateYaw(const Vec3 v, float yaw) {
     return rotated;
 }
 
-static inline void MatchTiltAndRollToGround(Kart::Physics& physics, Vec3 ground) {
+static inline void MatchPitchAndRollToGround(Kart::Physics& physics, Vec3 groundNor) {
     Vec3 up = GetUp(physics.mainRot);
-    Vec3 forward = GetForward(physics.mainRot);
-    Vec3 right = GetRight(physics.mainRot);
-    ground.Normalize();
+
+    groundNor.Normalize();
     
     Quat correction;
-    correction.MakeVectorRotation(up, ground);
+    correction.MakeVectorRotation(up, groundNor);
     Quat targetRot = MultiplyQuat(correction, physics.mainRot);
 
     physics.mainRot.SlerpTo(targetRot, physics.mainRot, physics.stabilizationFactor);
+    physics.mainRot.Normalise();
+}
+
+static inline void MatchRollToGround(Kart::Physics& physics, Vec3 groundNor) {
+    groundNor.Normalize();
+
+    Vec3 forward = GetForward(physics.mainRot);
+    Vec3 up = GetUp(physics.mainRot);
+
+    float forwardComponent = Dot(groundNor, forward);
+
+    Vec3 desiredUp = SubVec(
+        groundNor,
+        MultiplyVecByFloat(forward, forwardComponent)
+    );
+
+    desiredUp.Normalize();
+
+    float sinAngle = Dot(Cross(up, desiredUp), forward);
+    float cosAngle = Dot(up, desiredUp);
+
+    float angle = EGG::Math::Atan2(sinAngle, cosAngle);
+
+    Quat correction;
+    correction.SetAxisRotation(forward, angle);
+
+    Quat targetRot = MultiplyQuat(correction, physics.mainRot);
+
+    physics.mainRot.SlerpTo(
+        targetRot,
+        physics.mainRot,
+        physics.stabilizationFactor
+    );
+
     physics.mainRot.Normalise();
 }
 

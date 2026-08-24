@@ -8,9 +8,8 @@
 
 //MKWG Dev Note: Code by Retro Rewind and WTP Teams
 
-namespace MKWG{
-namespace Race
-{
+namespace MKWG {
+namespace Race {
     static void ChangeBlueProp(Item::ObjProperties* dest, const Item::ObjProperties& rel)
     {
         bool itemModeRandom = Pulsar::MKWGSETTING_ITEMMODE_REGULAR;

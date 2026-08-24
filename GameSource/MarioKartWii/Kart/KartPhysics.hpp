@@ -36,14 +36,14 @@ public:
     Vec3 speed3; //0xc8
     Vec3 speed; //0xd4 sum of vel0, vel1, vel2 and vel3
     float speedNorm; //0xe0
-    Vec3 rotVec2; //0xe4
+    Vec3 rotVec2; //0xe4 in air movements like hop rotations, stabilization etc.
     Quat mainRot; //0xf0
     Quat fullRot; //0x100 also includes specialRot
     Vec3 normalAcceleration; //0x110
     Vec3 normalRotVec; //0x11c
     Quat specialRot; //0x128 e.g. trick
     Quat unknown_0x138; //0x138
-    float gravity; //1.3f most of the time
+    float gravity; //1.3f most of the time, value is subtracted to speed0.y every frame
     Vec3 engineSpeed; //speed caused by the kart engine
     u8 unknown_0x158[0x178 - 0x158];
     float stabilizationFactor;

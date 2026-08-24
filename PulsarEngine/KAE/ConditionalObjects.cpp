@@ -16,7 +16,8 @@
 #include <MarioKartWii/Race/RaceInfo/RaceInfo.hpp>
 #include <KAE/KMPAREAExpander.hpp>
 
-// Conditional Objects [Retro Rewind] + AREA-based detection only [BlueLeopard]
+// Conditional Objects [Retro Rewind] + AREA-based detection [BlueLeopard]
+// This works just fine. Might make some additions to it later, but for now it does what it's supposed to do.
 
 /*
 GOBJ->padding (u16) -> setting1
@@ -27,21 +28,24 @@ durationFrames (u16) -> setting2
 delayFrames (u8) -> enemyrouteId
 */
 
+/*
+for the animations:
+object->ModelDirector->scnMdlEx->ScnMdl->Material->Color->Alpha
+*/
 namespace MKWG {
 namespace Race {
 
 // --- AREA state (detection + delay/duration/forEveryone) ---
-static const u32 MAX_PENDING = 32;
-static const u32 MAX_EFFECTS = 64;
+static const u32 MAX_PENDING = 256;
+static const u32 MAX_EFFECTS = 2048;
 
 struct PendingAction {
     u16 objMatch;
-    u8 action;       // 0 = remove (hide), 1 = add (show)
-    bool forEveryone;  // true = for everyone, false = only for triggerPlayerId
+    u8 action;
+    bool forEveryone;
     u8 triggerPlayerId;
     u16 delayFrames;
     u16 durationFrames;
-    u16 delayCounter;
     bool valid;
 };
 
@@ -50,7 +54,7 @@ struct Effect {
     u8 action;
     bool forEveryone;
     u8 triggerPlayerId;
-    u16 durationRemaining;
+    u16 durationFrames;
     u32 serial;
     bool valid;
 };
@@ -102,7 +106,6 @@ static void PushPending(u16 objMatch, u8 action, bool forEveryone, u8 triggerPla
             sPendingActions[i].triggerPlayerId = triggerPlayerId;
             sPendingActions[i].delayFrames = delayFrames;
             sPendingActions[i].durationFrames = durationFrames;
-            sPendingActions[i].delayCounter = delayFrames;
             sPendingActions[i].valid = true;
             return;
         }
@@ -116,7 +119,7 @@ static void PushEffect(u16 objMatch, u8 action, bool forEveryone, u8 triggerPlay
             sEffects[i].action = action;
             sEffects[i].forEveryone = forEveryone;
             sEffects[i].triggerPlayerId = triggerPlayerId;
-            sEffects[i].durationRemaining = durationFrames;
+            sEffects[i].durationFrames = durationFrames;
             sEffects[i].serial = ++sEffectSerial;
             sEffects[i].valid = true;
             return;
@@ -154,22 +157,21 @@ void ConditionalObjectFrameUpdate() {
         KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
         if (KAE.condObj && !KAE.prevCondObj && ConditionalObjAction(playerId)) {
-            u8 action = kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->routeId & 0x3; // appear / disappear. May add more actions later if possible
+            u8 action = kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->routeId & 0x3; // 0 = disable, 1 = enable, 2 = switch, 3 = alternate
             bool forEveryone = (kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->routeId & 0x4) != 0; // only for activator or for everyone
-            u16 areaSetting1 = kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->setting1; // just so it can get transported to PushPending
-            u8 delayFrames = kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->enemyRouteId; // frames it takes to enable / disable. good for animations later.
+            u8 GOBJPadding = kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->enemyRouteId; // just so it can get transported to PushPending
+            u16 delayFrames = kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->setting1; // frames it takes to enable / disable. good for animations later.
             u16 durationFrames = kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->setting2; // frames it takes to return on previous action.
 
-            PushPending(areaSetting1, action, forEveryone, playerId, delayFrames, durationFrames);
+            PushPending(GOBJPadding, action, forEveryone, playerId, delayFrames, durationFrames);
         }
     }
-    
 
     for (u32 i = 0; i < MAX_PENDING; ++i) {
         if (!sPendingActions[i].valid) continue;
         PendingAction& p = sPendingActions[i];
-        if (p.delayCounter > 0) {
-            p.delayCounter--;
+        if (p.delayFrames > 0) {
+            p.delayFrames--;
             continue;
         }
         PushEffect(p.objMatch, p.action, p.forEveryone, p.triggerPlayerId, p.durationFrames);
@@ -179,9 +181,9 @@ void ConditionalObjectFrameUpdate() {
     for (u32 i = 0; i < MAX_EFFECTS; ++i) {
         if (!sEffects[i].valid) continue;
         Effect& e = sEffects[i];
-        if (e.durationRemaining > 0) {
-            e.durationRemaining--;
-            if (e.durationRemaining == 0) {
+        if (e.durationFrames > 0) {
+            e.durationFrames--;
+            if (e.durationFrames == 0) {
                 u8 oppositeAction = e.action == 0 ? 1 : 0;
                 PushEffect(e.objMatch, oppositeAction, e.forEveryone, e.triggerPlayerId, 0);
                 e.valid = false;
@@ -304,7 +306,27 @@ static void EvaluateConditionalState(const Object& object, ConditionalState& sta
     }
 }
 
-// from here
+/*void AnimationViaColorChanges(const Object* object) {
+    ModelDirector* director = object->mdlDirector;
+
+    // Assume for now every ModelDirector is actually a MatModelDirector.
+    MatModelDirector* matDirector = static_cast<MatModelDirector*>(director);
+
+    if (matDirector == nullptr) return;
+
+    // Make sure TEV copies exist.
+    matDirector->CopyMaterialsTevColors();
+
+    // Get the first material.
+    g3d::ResTevColorDL* tev = matDirector->matsResTevColorCopy[0][0];
+
+    if (tev == nullptr) return;
+
+    // TODO: Change alpha here.
+
+    // Push the modified copy back to the renderer.
+    matDirector->ReplaceDefaultScnMdlTevColorDL(0);
+}*/
 
 // --- Per-screen visibility and apply ---
 static bool IsModelDirectorReadyForPerScreenVisibility(const ModelDirector* director) {

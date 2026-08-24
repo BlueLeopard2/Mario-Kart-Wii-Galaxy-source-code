@@ -6,6 +6,8 @@
 #include <MarioKartWii/Math/Vector.hpp>
 #include <KAE/KAEMath.hpp>
 
+// This is just a storage room so that everything is connected basically. The structure should probably be different but it works and that's all I care about for now.
+
 namespace Kart {
 class Status;
 class Physics;
@@ -23,9 +25,9 @@ namespace Race {
 
 // Per-player state KAE
 struct KMPAREAExpander {
-    bool flagPermStay;
-    bool flagKCLStay;
-    u32 prevWheelFlags;
+    bool flagPermStay[10];
+    bool flagKCLStay[10];
+    
     // AREA indices (>=0 means player is inside the AREA)
     s16 ConditionalObject;
     s16 ConfigurableGravity;
@@ -69,9 +71,18 @@ struct KMPAREAExpander {
     float underWaterGravity;
     float yawVel;
     float leanVel;
-    float zMemory;
-    float xSideSpeed;
-    float zSideSpeed;
+    float liftMemory;
+
+    // new model
+    float gliderGravity;
+    float gliderBonusSpeed;
+    float gliderPitch;
+    float pitch;
+    float roll;
+    float previousPitch;
+    Vec3 flightDir;
+    float lift;
+    float drag;
 
     Vec3 antiGravVec;
     Vec3 cameraVec;
@@ -94,6 +105,7 @@ struct KMPAREAExpander {
     bool brake;
     bool drift;
     bool hop;
+    bool justTricked;
     bool inATrick;
     bool mtBoost;
     bool stopped;
@@ -108,13 +120,16 @@ struct KMPAREAExpander {
     bool shocked;
     bool feather;
     bool oob;
-
-    u16 kclFlag;
+    bool respawn;
+    
+    u32 kclFlag;
     u32 wheelFlag;
 
     float xInput;
     float yInput;
     float zInput;
+
+    float railRideJumpDir;
 
     float acceleration;
     float handling;
@@ -137,6 +152,7 @@ struct KMPAREAExpander {
     bool prevDest;
     bool prevShocked;
     bool prevStar;
+    bool prevOob;
     bool prevStopped;
 
     bool prevAirSpeedUp;
@@ -173,40 +189,50 @@ struct KMPAREAExpander {
 extern KMPAREAExpander KMPAREAExpand[12];
 extern u16 raceFrameCount;
 
-// In FrameRaceHook {
-    // General functions
-    void KMPDetector(Kart::Status& status, u8 playerId);
-    void Effects(const Kart::Status& status, u8 playerId);
-    void Safe();
-    void KMP(Kart::Sub& sub, u8 playerId);
-    void KMPAREAs();
+// In FrameRaceHook
+// General functions
+void KMPDetector(Kart::Physics* physics, u8 playerId);
+void Effects(const Kart::Status& status, u8 playerId);
+void Safe();
+void KMP(Kart::Sub& sub, u8 playerId);
+void KMPAREAs();
 
-    // Mechanics
-    void GliderState(Kart::Physics& physics, u8 playerId);
-    void GliderMovement(Kart::Movement& movement, u8 playerId);
-    void AntiGravity(Kart::Movement& movement, u8 playerId);
-    void SuperMarioGalaxyGravity(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
-    void UnderWaterPhysics(Kart::Movement& movement, Kart::Physics& physics, const Kart::Status& status, u8 playerId);
-    void RailRide(Input::State& inputState, Kart::Movement& movement, Kart::Physics& physics, Kart::Status& status, u8 playerId);
-    void AirBoost(Kart::Movement& movement, u8 playerId);
-    void Wind(Kart::Physics& physics, u8 playerId);
-    
+// Mechanics
+void GliderState(Kart::Physics& physics, u8 playerId);
+void GliderMovement(Kart::Movement& movement, u8 playerId);
+void AntiGravity(Kart::Movement& movement, u8 playerId);
+void SuperMarioGalaxyGravity(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
+void UnderWaterPhysics(Kart::Movement& movement, Kart::Physics& physics, const Kart::Status& status, u8 playerId);
+void RailRide(Input::State& inputState, Kart::Movement& movement, Kart::Physics& physics, Kart::Status& status, u8 playerId);
+void AirBoost(Kart::Movement& movement, u8 playerId);
+void Wind(Kart::Physics& physics, u8 playerId);
 
-    // Conditional objects 
-    void ConditionalObjectFrameUpdate();
-    void ConditionalObjectReset();
-    bool ConditionalObjAction(u8 playerId);
-    void CondObjPrevState();
-// }
+
+// Conditional objects 
+void ConditionalObjectFrameUpdate();
+void ConditionalObjectReset();
+bool ConditionalObjAction(u8 playerId);
+void CondObjPrevState();
+
 
 // Just before Physics::Update
+Vec3 PointGravVec(Kart::Physics& physics, u8 playerId);
+void RespawnInTiltedGravity(Kart::Physics& physics, u8 playerId);
 void ConfigurableGravity(Kart::Physics& physics, u8 playerId);
 void RailRidePhysics(Kart::Physics& physics, u8 playerId); 
 void AntiGravPhysics(Kart::Physics& physics, u8 playerId);
-void GliderGravity(Kart::Physics& physics, u8 playerId);
+void GliderGravity(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
 void GliderRotation(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
 void Teleportation(Kart::Physics& physics, u8 playerId);
-void RotateSpeedAfterTP(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
+void RotateSpeedAfterTP(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);\
+
+// new model
+void UpdatePitch(Kart::Physics& physics, u8 playerId);
+void UpdateYaw(Kart::Physics& physics, u8 playerId);
+void UpdateRoll(Kart::Physics& physics, u8 playerId);
+void UpdateFlightDirection(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
+void UpdateLift(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
+void ExitGlider(Kart::Physics& physics, u8 playerId);
 
 } // Race
 } // MKWG

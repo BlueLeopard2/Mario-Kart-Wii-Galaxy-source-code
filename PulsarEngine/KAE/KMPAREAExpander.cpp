@@ -6,23 +6,27 @@
 #include <MarioKartWii/Kart/KartPhysics.hpp>
 #include <MarioKartWii/Kart/KartStatus.hpp>
 #include <MarioKartWii/Kart/KartValues.hpp>
+#include <MarioKartWii/Kart/Hitbox.hpp>
+#include <MarioKartWii/KCL/Collision.hpp>
 #include <MarioKartWii/KMP/KMPManager.hpp>
 #include <MarioKartWii/Race/RaceInfo/RaceInfo.hpp>
 #include <MarioKartWii/RKNet/RKNetController.hpp>
 #include <PulsarSystem.hpp>
 #include <KAE/KMPAREAExpander.hpp>
+#include <core/rvl/OS/OS.hpp>
 
 // KMP AREA Expander [BlueLeopard]
+// This file holds the first code I ever wrote. There are definitely some huge mistakes I just need to eventually fix. The code does work though...
+// At the bottom of this file is a function which is called once per frame per player (I believe).
 namespace MKWG {
 namespace Race {
+
 
 kmRuntimeUse(0x808B5AE8); //wheelie steepness changer, used for anti-gravity [Gab]
 KMPAREAExpander KMPAREAExpand[12];
 u16 raceFrameCount = 0;
 
 KMPAREAExpander::KMPAREAExpander() : 
-    flagPermStay(false), flagKCLStay(false), prevWheelFlags(0),
-
     ConditionalObject(-1),
     ConfigurableGravity(-1), AntiGravity(-1), PointGravity(-1), Gliding(-1),
     Wind(-1), AirRing(-1),
@@ -40,8 +44,12 @@ KMPAREAExpander::KMPAREAExpander() :
     prevUnderWater(false),
 
     AREAGravity(0.0f), upDown(0.0f), underWaterGravity(0.0f),
-    yawVel(0.0f), leanVel(0.0f), zMemory(0.0f),
-    xSideSpeed(0.0f), zSideSpeed(0.0f),
+    yawVel(0.0f), leanVel(0.0f), liftMemory(0.0f), 
+    
+    gliderGravity(0.0f), gliderBonusSpeed(0.0f), gliderPitch(0.0f),
+
+    pitch(0.0f), roll(0.0f), previousPitch(0.0f),
+    lift(0.0f), drag(0.0f),
 
     rotatedinAir(false),
     MKWorldRailRide(false),
@@ -49,22 +57,24 @@ KMPAREAExpander::KMPAREAExpander() :
     airBooster(0.0f), airBoosterDuration(0.0f),
 
     accelerate(false), brake(false), drift(false), hop(false),
-    inATrick(false), mtBoost(false), stopped(false),
+    justTricked(false), inATrick(false), mtBoost(false), stopped(false),
     wall(false), ground(false), air20(false), wheelie(false),
 
     mega(false), mushroom(false), star(false),
-    shocked(false), feather(false), oob(false),
+    shocked(false), feather(false), oob(false), respawn(false),
 
     kclFlag(0), wheelFlag(0),
 
     xInput(0.0f), yInput(0.0f), zInput(0.0f), 
 
+    railRideJumpDir(0.0f),
+
     acceleration(0.0f), handling(0.0f), handlingSpeed(0.0f),
     baseSpeed(0.0f),
 
     prevInGlider(false), prevHop(false), prevMega(false),
-    prevMushroom(false), prevOnRail(false),
-    prevShocked(false), prevStar(false), prevStopped(false),
+    prevMushroom(false), prevOnRail(false), prevShocked(false), 
+    prevStar(false), prevOob(false), prevStopped(false), 
     prevAirSpeedUp(false), prevAntiGrav(false), teleported(false),
 
     waitForLaunch(0), waitForTeleport(0),
@@ -76,15 +86,18 @@ KMPAREAExpander::KMPAREAExpander() :
 
     normalSoftSpeedLimit(0.0f) {
 
+    memset(flagPermStay, 0, sizeof(flagPermStay));
+    memset(flagKCLStay, 0, sizeof(flagKCLStay));
+
     antiGravVec.x = antiGravVec.y = antiGravVec.z =
+    flightDir.x = flightDir.y = flightDir.z =
     cameraVec.x = cameraVec.y = cameraVec.z =
     floorNormal.x = floorNormal.y = floorNormal.z = 0.0f;
 }
 
 void KMPAREAExpander::Reset() {
-    flagPermStay = false;
-    flagKCLStay = false;
-    prevWheelFlags = false;
+    memset(flagPermStay, 0, sizeof(flagPermStay));
+    memset(flagKCLStay, 0, sizeof(flagKCLStay));
 
     ConditionalObject = -1;
     ConfigurableGravity = -1;
@@ -122,12 +135,20 @@ void KMPAREAExpander::Reset() {
 
     yawVel = 0.0f;
     leanVel = 0.0f;
-    zMemory = 0.0f;
+    liftMemory = 0.0f; // not used atm
 
-    xSideSpeed = 0.0f;
-    zSideSpeed = 0.0f;
+    gliderGravity = 0.0f;
+    gliderBonusSpeed = 0.0f;
+    gliderPitch = 0.0f;
+
+    pitch = 0.0f;
+    roll = 0.0f;
+    previousPitch = 0.0f;
+    lift = 0.0f;
+    drag = 0.0f;
 
     antiGravVec.x = antiGravVec.y = antiGravVec.z =
+    flightDir.x = flightDir.y = flightDir.z =
     cameraVec.x = cameraVec.y = cameraVec.z =
     floorNormal.x = floorNormal.y = floorNormal.z = 0.0f;
 
@@ -142,6 +163,7 @@ void KMPAREAExpander::Reset() {
     brake = false;
     drift = false;
     hop = false;
+    justTricked = false;
     inATrick = false;
     mtBoost = false;
     stopped = false;
@@ -156,6 +178,7 @@ void KMPAREAExpander::Reset() {
     shocked = false;
     feather = false;
     oob = false;
+    respawn = false;
 
     kclFlag = 0;
     wheelFlag = 0;
@@ -169,6 +192,8 @@ void KMPAREAExpander::Reset() {
     yInput = 0.0f;
     zInput = 0.0f;
 
+    railRideJumpDir = 0.0f;
+
     prevInGlider = false;
     prevHop = false;
     prevMega = false;
@@ -176,7 +201,9 @@ void KMPAREAExpander::Reset() {
     prevOnRail = false;
     prevShocked = false;
     prevStar = false;
+    prevOob = false;
     prevStopped = false;
+    
     prevAirSpeedUp = false;
     prevAntiGrav = false;
     prevCondObj = false;
@@ -200,60 +227,45 @@ void KMPAREAExpander::Reset() {
     kmRuntimeWrite16A(0x808B5AE8, 0x3F00);
 }
 
-bool UpdateAREAFlag(Kart::Status& status, s16 areaIndex, bool prevFlag, u8 playerId) {
+bool UpdateAREAFlag(s16 areaIndex, bool prevFlag, u8 playerId, u8 mechNum) {
+    const Raceinfo* raceInfo = Raceinfo::sInstance;
     KMP::Manager* kmp = KMP::Manager::sInstance;
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
     if (areaIndex < 0) {
-        KAE.flagPermStay = false;
-        KAE.flagKCLStay = false;
+        KAE.flagPermStay[mechNum] = false;
+        KAE.flagKCLStay[mechNum] = false;
         return false;
     }
-    if (KAE.flagPermStay) return true;
+    if (KAE.flagPermStay[mechNum]) return true;
 
+    u8 checkpointCheck = kmp->areaSection->GetHolder(areaIndex)->raw->camera;
     u16 padding = kmp->areaSection->GetHolder(areaIndex)->raw->unknown_0x2e;
     u8 targetKCL = padding & 0xFF;
+    u32 targetKCLFlag = 1u << targetKCL;
+
     if (padding & 0x100 && !KAE.ground) return false; // only when on ground
-    if (padding & 0x200 && (KAE.ground || KAE.air20)) return false; // only when in air
-    if (padding & 0x400 && !KAE.wall) return false; // only when touching wall
-    if (padding & 0x800 && KAE.wall) return false; // only when not touching wall
-
-    u32 targetFlag = 1u << targetKCL;
-    u16 wheelCount = status.link->GetWheelCount0();
-
-if (targetKCL < 0x1F) {
-        u32 combined = 0;
-
-        for (u8 i = 0; i < wheelCount; i++) {
-            KAE.wheelFlag = status.link->GetWheelClosestFloorKCLFlag(i);
-            combined |= KAE.wheelFlag;
-
-            if (KAE.wheelFlag & targetFlag) {
-                if (padding & 0x8000) KAE.flagPermStay = true;
-                else if (padding & 0x4000) KAE.flagKCLStay = true;
-                return true;
-            }
-        }
-
-        if (combined != 0) KAE.prevWheelFlags = combined;
-
-        if (KAE.flagKCLStay && (KAE.prevWheelFlags & targetFlag)) {
-            if (padding & 0x8000) KAE.flagPermStay = true;
-            else if (padding & 0x4000) KAE.flagKCLStay = true;
+    if (padding & 0x200 && (KAE.ground || !KAE.air20)) return false; // only when in air
+    if (padding & 0x800 && KAE.justTricked) return false;ed
+    //if (checkpointCheck < raceInfo->checkpoint && checkpointCheck != 0) return false;
+    if (targetKCL < 0x1F) {
+        if ((padding & 0x4000) && KAE.kclFlag != 0) KAE.flagKCLStay[mechNum] = ((KAE.kclFlag & targetKCLFlag) != 0); // if 14th bit is true, mechanic stays activated until different KCL type is touched
+        if ((KAE.kclFlag & targetKCLFlag) != 0) {
+            if (padding & 0x8000) KAE.flagPermStay[mechNum] = true;
             return true;
-        }
+        }    
+        if (KAE.flagKCLStay[mechNum]) return true;
+        
         return false;
     }
-    if (padding & 0x8000) KAE.flagPermStay = true;
-    else if (padding & 0x4000) KAE.flagKCLStay = true;
+
+    if (padding & 0x8000) KAE.flagPermStay[mechNum] = true;
 
     return true;
 }
 
-void KMPDetector(Kart::Status& status, u8 playerId) {
-    Kart::Manager* kartManager = Kart::Manager::sInstance;
-    Kart::Player* player = kartManager->GetKartPlayer(playerId);
-    const Vec3& pos = player->GetPhysics().position;
+void KMPDetector(Kart::Physics* physics, u8 playerId) {
+    const Vec3& pos = physics->position;
     KMP::Manager* kmp = KMP::Manager::sInstance;
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
@@ -269,17 +281,17 @@ void KMPDetector(Kart::Status& status, u8 playerId) {
     KAE.Submarine           = kmp->FindAREA(pos, (u32)-1, (u8)0x15);
     KAE.Speedboat           = kmp->FindAREA(pos, (u32)-1, (u8)0x16);
 
-    KAE.condObj    = UpdateAREAFlag(status, KAE.ConditionalObject, KAE.condObj, playerId);
-    KAE.configGrav = UpdateAREAFlag(status, KAE.ConfigurableGravity, KAE.configGrav, playerId);
-    KAE.antiGrav   = UpdateAREAFlag(status, KAE.AntiGravity, KAE.antiGrav, playerId);
-    KAE.pointGrav  = UpdateAREAFlag(status, KAE.PointGravity, KAE.pointGrav, playerId);
-    KAE.glider     = UpdateAREAFlag(status, KAE.Gliding, KAE.glider, playerId);
-    KAE.windy      = UpdateAREAFlag(status, KAE.Wind, KAE.windy, playerId);
-    KAE.airSpeedUp = UpdateAREAFlag(status, KAE.AirRing, KAE.airSpeedUp, playerId);
-    KAE.onRail     = UpdateAREAFlag(status, KAE.Rail, KAE.onRail, playerId);
-    KAE.underWater = UpdateAREAFlag(status, KAE.Submarine, KAE.underWater, playerId);
-    KAE.onWater    = UpdateAREAFlag(status, KAE.Speedboat, KAE.onWater, playerId);
-    KAE.portal     = UpdateAREAFlag(status, KAE.Teleport, KAE.portal, playerId);
+    KAE.condObj    = UpdateAREAFlag(KAE.ConditionalObject, KAE.condObj, playerId, 0);
+    KAE.configGrav = UpdateAREAFlag(KAE.ConfigurableGravity, KAE.configGrav, playerId, 1);
+    KAE.antiGrav   = UpdateAREAFlag(KAE.AntiGravity, KAE.antiGrav, playerId, 2);
+    KAE.pointGrav  = UpdateAREAFlag(KAE.PointGravity, KAE.pointGrav, playerId, 3);
+    KAE.glider     = UpdateAREAFlag(KAE.Gliding, KAE.glider, playerId, 4);
+    KAE.windy      = UpdateAREAFlag(KAE.Wind, KAE.windy, playerId, 5);
+    KAE.airSpeedUp = UpdateAREAFlag(KAE.AirRing, KAE.airSpeedUp, playerId, 6);
+    KAE.onRail     = UpdateAREAFlag(KAE.Rail, KAE.onRail, playerId, 7);
+    KAE.portal     = UpdateAREAFlag(KAE.Teleport, KAE.portal, playerId, 8);
+    KAE.underWater = UpdateAREAFlag(KAE.Submarine, KAE.underWater, playerId, 9);
+    KAE.onWater    = UpdateAREAFlag(KAE.Speedboat, KAE.onWater, playerId, 10);
 }
 
 void Effects(const Kart::Status& status, u8 playerId) {
@@ -299,6 +311,7 @@ void Effects(const Kart::Status& status, u8 playerId) {
     KAE.mega        = (bitfield2 & 0x8000) != 0 || (bitfield2 & 0x20000000) != 0;
     KAE.stopped     = (bitfield2 & 0x40000) != 0;
     KAE.shocked     = (bitfield2 & 0x80) != 0 || (bitfield2 & 0x10000) != 0;
+    KAE.justTricked = (bitfield1 & 0x20) != 0;
     KAE.inATrick    = (bitfield1 & 0x40) != 0;
     KAE.wheelie     = (bitfield0 & 0x20000000) != 0;
     KAE.feather     = (bitfield1 & 0x4000) != 0;
@@ -307,12 +320,20 @@ void Effects(const Kart::Status& status, u8 playerId) {
     KAE.hop         = (bitfield0 & 0x80000) != 0;
     KAE.oob         = (bitfield0 & 0x10) != 0;
     KAE.air20       = (status.airtime > 19);
+    KAE.respawn     = (bitfield1 & 0x2000) != 0;
     
-    KAE.floorNormal = status.floorNor;
     KAE.xInput = status.stickX;
     KAE.yInput = status.stickY;
     if (status.airtime >= 2 && (!status.bool_0x96 || status.airtime > 19)) KAE.zInput = controllerHolder.inputStates[0].stick.z;
     else KAE.zInput = 0;
+
+    KAE.kclFlag = 0;
+    u16 wheelCount = status.link->GetWheelCount0();
+    for (u8 i = 0; i < wheelCount; i++) {
+        Kart::CollisionData& floorData = status.link->GetWheelPhysicsCollisionData(i);
+        KAE.kclFlag |= floorData.closestFloorFlags;
+        if (floorData.floorNor.x != 0.0f || floorData.floorNor.y != 0.0f || floorData.floorNor.z != 0.0f) KAE.floorNormal = floorData.floorNor;
+    }
 }
 
 void FindStats(const Kart::Status& status, u8 playerId) {
@@ -336,6 +357,7 @@ void PrevState(u8 playerId) {
     KAE.prevMushroom = KAE.mushroom;
     KAE.prevShocked = KAE.shocked;
     KAE.prevStar = KAE.star;
+    KAE.prevOob = KAE.oob;
     KAE.prevStopped = KAE.stopped;
     KAE.prevAirSpeedUp = KAE.airSpeedUp;
     KAE.prevAntiGrav = KAE.antiGrav;
@@ -365,15 +387,18 @@ void KMP(Kart::Sub& sub, u8 playerId) {
     if (!inputState) return;
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
-    KMPDetector(*status, playerId);
     Effects(*status, playerId);
     FindStats(*status, playerId);
+
+    KMPDetector(physics, playerId);
+
     AntiGravity(*movement, playerId);
     // PointGravity(*movement, *physics, playerId);
     // UnderWaterPhysics(*movement, *physics, *status, playerId)
     GliderState(*physics, playerId);
-    if (KAE.inGlider) GliderMovement(*movement, playerId);
-    RailRide(*inputState, *movement, *physics, *status, playerId);
+    
+    //if (KAE.onrail && KAE.ground) RailRideEject(*inputState);
+
     AirBoost(*movement, playerId);
     Wind(*physics, playerId);
 

@@ -16,8 +16,6 @@
 #include <Race/200ccParams.hpp>
 #include <PulsarSystem.hpp>
 
-
-
 namespace Pulsar {
 namespace Race {
 //Mostly a port of MrBean's version with better hooks and arguments documentation
@@ -33,10 +31,7 @@ RaceinfoPlayer* LoadCustomLapCount(RaceinfoPlayer* player, u8 id) {
     if (KMP::Manager::sInstance && KMP::Manager::sInstance->stgiSection && KMP::Manager::sInstance->stgiSection->holdersArray[0]) {
         lapCount = KMP::Manager::sInstance->stgiSection->holdersArray[0]->raw->lapCount;
     }
-
-    if (roomType == RKNet::ROOMTYPE_VS_WW || roomType == RKNet::ROOMTYPE_BT_WW || roomType == RKNet::ROOMTYPE_VS_REGIONAL || roomType == RKNet::ROOMTYPE_BT_REGIONAL || 
-        mode == MODE_TIME_TRIAL || mode == MODE_GHOST_RACE) lapCount = lapCount;
-    
+    if (RKNet::Controller::sInstance->roomType == RKNet::ROOMTYPE_VS_WW || RKNet::Controller::sInstance->roomType == RKNet::ROOMTYPE_BT_WW || RKNet::Controller::sInstance->roomType == RKNet::ROOMTYPE_VS_REGIONAL || RKNet::Controller::sInstance->roomType == RKNet::ROOMTYPE_BT_REGIONAL || mode == MODE_TIME_TRIAL) lapCount = lapCount;
     else if (roomType == RKNet::ROOMTYPE_FROOM_HOST || roomType == RKNet::ROOMTYPE_FROOM_NONHOST) {
         if (System::sInstance->IsContext(Pulsar::PULSAR_LAPS1))       lapCount = 1;
         else if (System::sInstance->IsContext(Pulsar::PULSAR_LAPS2))  lapCount = 2;
@@ -44,9 +39,7 @@ RaceinfoPlayer* LoadCustomLapCount(RaceinfoPlayer* player, u8 id) {
         else if (System::sInstance->IsContext(Pulsar::PULSAR_LAPS4))  lapCount = 4;
         else if (System::sInstance->IsContext(Pulsar::PULSAR_LAPS5))  lapCount = 5;
         else if (System::sInstance->IsContext(Pulsar::PULSAR_LAPS5))  lapCount = rng.NextLimited(5) + 1;
-        else                                                          lapCount = lapCount;
     }
-    
     else {
         u32 setting = Pulsar::Settings::Mgr::Get().GetUserSettingValue(static_cast<Pulsar::Settings::UserType>(Pulsar::Settings::SETTINGSTYPE_MKWG2), Pulsar::SETTINGMKWG_LAPCOUNT);
         switch (setting) {
@@ -55,7 +48,7 @@ RaceinfoPlayer* LoadCustomLapCount(RaceinfoPlayer* player, u8 id) {
             case Pulsar::MKWGSETTING_LAPS_3: lapCount = 3; break;
             case Pulsar::MKWGSETTING_LAPS_4: lapCount = 4; break;
             case Pulsar::MKWGSETTING_LAPS_5: lapCount = 5; break;
-            case Pulsar::MKWGSETTING_LAPS_RANDOM: lapCount = rng.NextLimited(5) + 0x1; break;
+            case Pulsar::MKWGSETTING_LAPS_RANDOM: lapCount = rng.NextLimited(5) + 1; break;
             default:                                       break;
         }
     }
@@ -64,7 +57,6 @@ RaceinfoPlayer* LoadCustomLapCount(RaceinfoPlayer* player, u8 id) {
     return new (player) RaceinfoPlayer(id, lapCount);
 }
 kmCall(0x805328D4, LoadCustomLapCount);
-
 
 void DisplayCorrectLap(AnmTexPatHolder* texPat) {
     register u32 maxLap;

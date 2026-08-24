@@ -6,29 +6,26 @@
 #include <KAE/KMPAREAExpander.hpp>
 
 // Teleportation [BlueLeopard]
+// This one works really well in my opinion, if I could, I would make it possible to have an animation while teleporting / also making sure the camera angle teleports with the player, but looking at only physics it works really well.
 namespace MKWG {
 namespace Race {
 
 void Teleportation(Kart::Physics& physics, u8 playerId) {
     KMP::Manager* kmp = KMP::Manager::sInstance;
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
+
     if (KAE.waitForTeleport >= kmp->areaSection->GetHolder(KAE.Teleport)->raw->setting1) {
         for (u16 i = 0; i < kmp->cnptSection->pointCount; i++) {
             KMP::Holder<CNPT>* holder = kmp->cnptSection->holdersArray[i];
             if (!holder || !holder->raw) continue;
-            if (kmp->areaSection->GetHolder(KAE.Teleport)->raw->setting2 == holder->raw->id) {
+            if (kmp->areaSection->GetHolder(KAE.Teleport)->raw->routeId == holder->raw->id) {
                 physics.position = holder->raw->destPos;
 
-                const float yawDeg = holder->raw->angle.y;
-                const float yawRad = yawDeg * (3.14159265358979323846f / 180.0f);
-
-                Vec3 up;
-                up.x = 0.0f;
-                up.y = 1.0f;
-                up.z = 0.0f;
-
-                physics.mainRot.SetAxisRotation(up, yawRad);
+                Vec3 rot = MultiplyVecByFloat(holder->raw->angle, 3.14159265358979323846f / 180.0f);
+                physics.mainRot.SetRPY(rot.x, rot.y, rot.z);
+                
                 KAE.teleported = true;
+                if (KAE.inGlider) ExitGlider(physics, playerId);
             }
         }
     }

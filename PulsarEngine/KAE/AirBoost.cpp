@@ -3,6 +3,7 @@
 #include <KAE/KMPAREAExpander.hpp>
 
 // AirBoost [BlueLeopard]
+// This is simply a boost in the air. Really easy to make. There are still improvements to be made, though, this +10 per frame is probably to powerfull but fixing that is not my priority right now.
 namespace MKWG {
 namespace Race {
 
