@@ -45,6 +45,27 @@ static inline float Min(float a, float b) {
     return (a < b) ? a : b;
 }
 
+static inline void FindSmallest2(float array[], u8 size, u8& smallestIndex, u8& secondSmallestIndex) {
+    smallestIndex = 0;
+    secondSmallestIndex = 1;
+
+    if (array[secondSmallestIndex] < array[smallestIndex]) {
+        u8 temp = smallestIndex;
+        smallestIndex = secondSmallestIndex;
+        secondSmallestIndex = temp;
+    }
+
+    for (u8 i = 2; i < size; i++) {
+        if (array[i] < array[smallestIndex]) {
+            secondSmallestIndex = smallestIndex;
+            smallestIndex = i;
+        }
+        else if (array[i] < array[secondSmallestIndex]) {
+            secondSmallestIndex = i;
+        }
+    }
+}
+
 // Vector math
 static inline Vec3 WorldUp() {
     return Vec3(0.0f, 1.0f, 0.0f);
@@ -222,6 +243,43 @@ static inline void MatchRollToGround(Kart::Physics& physics, Vec3 groundNor) {
     );
 
     physics.mainRot.Normalise();
+}
+
+static inline void FindSmallest2Index(float array[], u8 size, u8& smallestIndex, u8& secondSmallestIndex) {
+    smallestIndex = 0;
+    secondSmallestIndex = 1;
+
+    if (array[secondSmallestIndex] < array[smallestIndex]) {
+        u8 temp = smallestIndex;
+        smallestIndex = secondSmallestIndex;
+        secondSmallestIndex = temp;
+    }
+
+    for (u8 i = 2; i < size; i++) {
+        if (array[i] < array[smallestIndex]) {
+            secondSmallestIndex = smallestIndex;
+            smallestIndex = i;
+        }
+        else if (array[i] < array[secondSmallestIndex]) {
+            secondSmallestIndex = i;
+        }
+    }
+}
+
+static inline Vec3 FindClosestPoint(Vec3 A, Vec3 B, Vec3 C) {
+    Vec3 AB = SubVec(B, A);
+
+    Vec3 AC = SubVec(C, A);
+
+    float t = (AC.x * AB.x + AC.y * AB.y + AC.z * AB.z) / (AB.x * AB.x + AB.y * AB.y + AB.z * AB.z);
+    Clamp(t, -1.0f, 1.0f);
+
+    Vec3 P;
+    P.x = A.x + t * AB.x;
+    P.y = A.y + t * AB.y;
+    P.z = A.z + t * AB.z;
+
+    return P;
 }
 
 static inline void Stopper(Kart::Physics& physics) {

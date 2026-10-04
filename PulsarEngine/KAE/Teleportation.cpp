@@ -18,6 +18,7 @@ void Teleportation(Kart::Physics& physics, u8 playerId) {
         for (u16 i = 0; i < kmp->cnptSection->pointCount; i++) {
             KMP::Holder<CNPT>* holder = kmp->cnptSection->holdersArray[i];
             if (!holder || !holder->raw) continue;
+            
             if (kmp->areaSection->GetHolder(KAE.Teleport)->raw->routeId == holder->raw->id) {
                 physics.position = holder->raw->destPos;
 
@@ -25,7 +26,6 @@ void Teleportation(Kart::Physics& physics, u8 playerId) {
                 physics.mainRot.SetRPY(rot.x, rot.y, rot.z);
                 
                 KAE.teleported = true;
-                if (KAE.inGlider) ExitGlider(physics, playerId);
             }
         }
     }

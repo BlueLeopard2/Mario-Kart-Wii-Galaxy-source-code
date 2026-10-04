@@ -64,16 +64,20 @@ void GliderMovement(Kart::Movement& movement, u8 playerId) {
     float gliderBonusSpeed = 0.0f;
 
     if (KAE.yInput > 0.1) {
-        targetSpeed = 120.0f;
-        speedChange = 120.0f / KAE.baseSpeed;
+        targetSpeed = KAE.hardSpeedLimit;
+        speedChange = KAE.hardSpeedLimit / KAE.baseSpeed;
     }
     if (Abs(KAE.xInput) > 0.1f) {
-        targetSpeed *= 0.85f;
-        speedChange *= 0.85f;
+        targetSpeed *= (1/Abs(KAE.xInput)) * 0.85f;
+        speedChange *= (1/Abs(KAE.xInput)) * 0.85f;
     }
     if (KAE.yInput < -0.1f) {
-        targetSpeed *= 0.7f;
-        speedChange *= 0.7f;
+        targetSpeed *= (1/Abs(KAE.yInput)) * 0.75f;
+        speedChange *= (1/Abs(KAE.yInput)) * 0.75f;
+    }
+    if (KAE.mushroom) {
+        targetSpeed = KAE.hardSpeedLimit;
+        speedChange *= 1.4f;
     }
     
     if (gliderSpeed <= targetSpeed) {

@@ -33,8 +33,7 @@ static bool IsAntiGravPhysics(const Kart::Physics* physics) {
 // Vanilla only does totalForce.y += Flinear.y, which is correct for world-up gravity but
 // collapses (or slides) under redirected gravity. Use the raw spring force (along the
 // suspension axis / local down) as the linear contribution instead.
-void ApplyWheelSuspensionAntiGrav(Kart::Physics* physics, const Vec3& suspTop, const Vec3& Flinear,
-                                  const Vec3& Frot, bool ignoreX) {
+void ApplyWheelSuspensionAntiGrav(Kart::Physics* physics, const Vec3& suspTop, const Vec3& Flinear, const Vec3& Frot, bool ignoreX) {
     if (IsAntiGravPhysics(physics)) {
         physics->normalAcceleration = AddVec(physics->normalAcceleration, Frot);
     }

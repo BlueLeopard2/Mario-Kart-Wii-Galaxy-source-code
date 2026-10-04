@@ -55,6 +55,7 @@ struct KMPAREAExpander {
 
     // Ground
     bool onRail;
+    bool isRailRiding;
 
     // Water
     bool onWater;
@@ -129,13 +130,16 @@ struct KMPAREAExpander {
     float yInput;
     float zInput;
 
+    u16 routeId;
+    u8 nextPoint;
+    bool direction;
     float railRideJumpDir;
 
     float acceleration;
     float handling;
     float handlingSpeed;
     float baseSpeed;
-
+    float hardSpeedLimit;
 
     // Previous frame state
 
@@ -170,7 +174,7 @@ struct KMPAREAExpander {
     u16 waitForTeleport;
     u16 waitBeforeJump;
     u16 waitingTime;
-    u16 height;
+    u8 height;
 
     bool jumpedSlow;
     bool jumpedFast;
@@ -200,11 +204,17 @@ void KMPAREAs();
 // Mechanics
 void GliderState(Kart::Physics& physics, u8 playerId);
 void GliderMovement(Kart::Movement& movement, u8 playerId);
+
 void AntiGravity(Kart::Movement& movement, u8 playerId);
-void SuperMarioGalaxyGravity(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
+
+void PointGravity(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
+
 void UnderWaterPhysics(Kart::Movement& movement, Kart::Physics& physics, const Kart::Status& status, u8 playerId);
-void RailRide(Input::State& inputState, Kart::Movement& movement, Kart::Physics& physics, Kart::Status& status, u8 playerId);
+
+void RailRideState(Input::State* inputState, Kart::Status& status, u8 playerId);
+
 void AirBoost(Kart::Movement& movement, u8 playerId);
+
 void Wind(Kart::Physics& physics, u8 playerId);
 
 
@@ -216,17 +226,33 @@ void CondObjPrevState();
 
 
 // Just before Physics::Update
+
+// point gravity
 Vec3 PointGravVec(Kart::Physics& physics, u8 playerId);
+
+// configurable gravity
 void RespawnInTiltedGravity(Kart::Physics& physics, u8 playerId);
 void ConfigurableGravity(Kart::Physics& physics, u8 playerId);
-void RailRidePhysics(Kart::Physics& physics, u8 playerId); 
+
+// railride
+void DetermineNextPoint(Kart::Physics& physics, Kart::Movement& movement, u8 playerId);
+void RailRideStart(Kart::Physics& physics, u8 playerId);
+void RailRidePhysics(Kart::Physics& physics, Kart::Movement& movement, u8 playerId);
+void RailRideRotation(Kart::Physics& physics, u8 playerId);
+void RailRideEject(Input::State& inputState, Kart::Status& status, u8 playerId);
+void RailRideJump(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
+void RailRideStop(u8 playerId);
+
+// anti gravity
 void AntiGravPhysics(Kart::Physics& physics, u8 playerId);
+
+// teleportation
+void Teleportation(Kart::Physics& physics, u8 playerId);
+void RotateSpeedAfterTP(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
+
+// glider
 void GliderGravity(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
 void GliderRotation(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
-void Teleportation(Kart::Physics& physics, u8 playerId);
-void RotateSpeedAfterTP(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);\
-
-// new model
 void UpdatePitch(Kart::Physics& physics, u8 playerId);
 void UpdateYaw(Kart::Physics& physics, u8 playerId);
 void UpdateRoll(Kart::Physics& physics, u8 playerId);

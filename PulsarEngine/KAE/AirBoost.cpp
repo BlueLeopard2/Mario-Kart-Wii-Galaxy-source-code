@@ -17,7 +17,7 @@ void AirBoost(Kart::Movement& movement, u8 playerId) {
     }
 
     if (KAE.airBoosterDuration > 0) {
-        movement.engineSpeed += 10.0f;
+        movement.engineSpeed += 7.0f;
         KAE.airBoosterDuration -= 1;
     }
 }

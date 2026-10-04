@@ -20,17 +20,18 @@
 // This works just fine. Might make some additions to it later, but for now it does what it's supposed to do.
 
 /*
-GOBJ->padding (u16) -> setting1
-action (2 bits) routeId: bit 0-1
-forEveryone (1 bit) routeId: bit 2
-lapCount (3 bits) routeId: bits 3-5
+GOBJ->padding (u16) -> routeId
+action (2 bits) enemyRoute: bit 0-1
+forEveryone (1 bit) enemyRoute: bit 2
+lapCount (3 bits) enemyRoute: bits 3-5
+visual (1 bit) enemyRoute: bit 6 still needs to be added
 durationFrames (u16) -> setting2
-delayFrames (u8) -> enemyrouteId
+delayFrames (u16) -> setting1
 */
 
 /*
 for the animations:
-object->ModelDirector->scnMdlEx->ScnMdl->Material->Color->Alpha
+object->ModelDirector->scnMdlEx->ScnMdl->Material->Color->Alpha still needs to be added
 */
 namespace MKWG {
 namespace Race {
@@ -89,7 +90,7 @@ bool ConditionalObjAction(u8 playerId) {
         if (!holder || !holder->raw) continue;
         if (holder->raw->padding != areaSetting1) continue;
 
-        const u8 correctLap = (kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->routeId >> 3) & 0x7;
+        const u8 correctLap = (kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->enemyRouteId >> 3) & 0x7;
         if (currentLap == 0 || currentLap > 50) currentLap = 1;
         if (correctLap != 0 && correctLap != currentLap) continue;
         return true;
@@ -157,9 +158,9 @@ void ConditionalObjectFrameUpdate() {
         KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
         if (KAE.condObj && !KAE.prevCondObj && ConditionalObjAction(playerId)) {
-            u8 action = kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->routeId & 0x3; // 0 = disable, 1 = enable, 2 = switch, 3 = alternate
-            bool forEveryone = (kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->routeId & 0x4) != 0; // only for activator or for everyone
-            u8 GOBJPadding = kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->enemyRouteId; // just so it can get transported to PushPending
+            u8 action = kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->enemyRouteId & 0x3; // 0 = disable, 1 = enable, 2 = switch, 3 = alternate
+            bool forEveryone = (kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->enemyRouteId & 0x4) != 0; // only for activator or for everyone
+            u8 GOBJPadding = kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->routeId; // just so it can get transported to PushPending
             u16 delayFrames = kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->setting1; // frames it takes to enable / disable. good for animations later.
             u16 durationFrames = kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->setting2; // frames it takes to return on previous action.
 

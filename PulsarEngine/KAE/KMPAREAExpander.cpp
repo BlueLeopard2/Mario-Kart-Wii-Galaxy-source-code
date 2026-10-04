@@ -16,8 +16,17 @@
 #include <core/rvl/OS/OS.hpp>
 
 // KMP AREA Expander [BlueLeopard]
-// This file holds the first code I ever wrote. There are definitely some huge mistakes I just need to eventually fix. The code does work though...
-// At the bottom of this file is a function which is called once per frame per player (I believe).
+
+/*
+Air boost Beta. Could use adjustments but not high priority in my opinion
+Anti-gravity v1.5. Doesn't work awesomely since like items and camera, but pure physics is good
+Conditional Objects v2.0. Works great. Will add one more feature where only the collision is disabled for if you want to use it simply to cause less lag in a track
+Glider v2.0. Works great. May need minor adjustments in the future but overall I'm happy
+Pointgravity Alpha. Never tested, but the structure is set up.
+Railride v2.0. Should add some effects to it, but other than that it works phenomenally, especially with the ignoring of the y value and just using groundNormal for the 3d direction
+Teleportation v1.0. Works like it should work. Could definitely use a camera change so that the POV is right behind the vehicle at all times, but that's a minor adjustment and is not a high priority
+Wind Alpha. Never tested, but the structure is set up.
+*/
 namespace MKWG {
 namespace Race {
 
@@ -38,7 +47,7 @@ KMPAREAExpander::KMPAREAExpander() :
     inGlider(false),
 
     windy(false), airSpeedUp(false),
-    onRail(false),
+    onRail(false), isRailRiding(false),
     underWater(false), onWater(false),
     portal(false),
     prevUnderWater(false),
@@ -67,10 +76,10 @@ KMPAREAExpander::KMPAREAExpander() :
 
     xInput(0.0f), yInput(0.0f), zInput(0.0f), 
 
-    railRideJumpDir(0.0f),
+    routeId(0), nextPoint(0), direction(true), railRideJumpDir(0.0f),
 
     acceleration(0.0f), handling(0.0f), handlingSpeed(0.0f),
-    baseSpeed(0.0f),
+    baseSpeed(0.0f), hardSpeedLimit(0.0f),
 
     prevInGlider(false), prevHop(false), prevMega(false),
     prevMushroom(false), prevOnRail(false), prevShocked(false), 
@@ -123,6 +132,7 @@ void KMPAREAExpander::Reset() {
     airSpeedUp = false;
 
     onRail = false;
+    isRailRiding = false;
 
     underWater = false;
     onWater = false;
@@ -153,8 +163,6 @@ void KMPAREAExpander::Reset() {
     floorNormal.x = floorNormal.y = floorNormal.z = 0.0f;
 
     rotatedinAir = false;
-
-    MKWorldRailRide = false;
 
     airBooster = 0.0f;
     airBoosterDuration = 0.0f;
@@ -187,11 +195,15 @@ void KMPAREAExpander::Reset() {
     handling = 0.0f;
     handlingSpeed = 0.0f;
     baseSpeed = 0.0f;
+    hardSpeedLimit = 0.0f;
 
     xInput = 0.0f;
     yInput = 0.0f;
     zInput = 0.0f;
 
+    routeId = 0;
+    nextPoint = 0;
+    direction = true;
     railRideJumpDir = 0.0f;
 
     prevInGlider = false;
@@ -306,7 +318,7 @@ void Effects(const Kart::Status& status, u8 playerId) {
     KAE.brake       = (bitfield0 & 0x2) != 0;
     KAE.drift       = (bitfield0 & (0x8 | 0x4)) != 0;
     KAE.ground      = (bitfield0 & (0x400 | 0x800 | 0x1000 | 0x40000)) != 0;
-    KAE.mushroom    = (bitfield0 & 0x2000000) != 0;
+    KAE.mushroom    = (bitfield0 & 0x4000000) != 0;
     KAE.star        = (bitfield1 & 0x80000000) != 0;
     KAE.mega        = (bitfield2 & 0x8000) != 0 || (bitfield2 & 0x20000000) != 0;
     KAE.stopped     = (bitfield2 & 0x40000) != 0;
@@ -336,7 +348,7 @@ void Effects(const Kart::Status& status, u8 playerId) {
     }
 }
 
-void FindStats(const Kart::Status& status, u8 playerId) {
+void FindStats(const Kart::Status& status, Kart::Movement* movement, u8 playerId) {
     const Kart::Stats& stats = status.link->GetStats();
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
@@ -346,6 +358,7 @@ void FindStats(const Kart::Status& status, u8 playerId) {
     KAE.handlingSpeed = stats.handlingSpeedMultiplier;
     KAE.acceleration = (stats.standard_acceleration_as[0] + stats.standard_acceleration_as[1] + stats.standard_acceleration_as[2] + stats.standard_acceleration_as[3]) * 0.25f;
     KAE.baseSpeed = stats.baseSpeed;
+    KAE.hardSpeedLimit = movement->hardSpeedLimit;
     KAE.statsFound = true;
 }
 
@@ -388,7 +401,7 @@ void KMP(Kart::Sub& sub, u8 playerId) {
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
     Effects(*status, playerId);
-    FindStats(*status, playerId);
+    FindStats(*status, movement, playerId);
 
     KMPDetector(physics, playerId);
 
@@ -397,7 +410,7 @@ void KMP(Kart::Sub& sub, u8 playerId) {
     // UnderWaterPhysics(*movement, *physics, *status, playerId)
     GliderState(*physics, playerId);
     
-    //if (KAE.onrail && KAE.ground) RailRideEject(*inputState);
+    if (KAE.onRail && KAE.isRailRiding) RailRideState(inputState, *status, playerId);
 
     AirBoost(*movement, playerId);
     Wind(*physics, playerId);

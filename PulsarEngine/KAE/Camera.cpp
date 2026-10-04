@@ -16,7 +16,7 @@ namespace MKWG {
 namespace Race {
 
 // Camera Rotations [Patchzy]
-bool TryGetCameraUp(Kart::Link* kartPlayer, Vec3& cameraUp) {
+/*bool TryGetCameraUp(Kart::Link* kartPlayer, Vec3& cameraUp) {
     if (kartPlayer == 0) return false;
     const Kart::PhysicsHolder& holder = kartPlayer->GetPhysicsHolder();
     if (holder.physics == 0) return false;
@@ -31,9 +31,57 @@ bool TryGetCameraUp(Kart::Link* kartPlayer, Vec3& cameraUp) {
 
     cameraUp = WorldUp();
     return false;
+}*/
+
+bool TryGetCameraUp(Kart::Link* kartPlayer, Vec3& cameraUp) {
+    if (kartPlayer == 0) return false;
+
+    const u8 playerId = kartPlayer->GetPlayerIdx();
+    KMPAREAExpander& KAE = KMPAREAExpand[playerId];
+
+    if (!KAE.antiGrav && !KAE.configGrav) return false;
+
+    cameraUp = KAE.floorNormal;
+
+    if (NormalizeSafe(cameraUp)) return true;
+
+    return false;
 }
 
 bool BuildGravityContext(RaceCamera* camera, Kart::Link* kartPlayer, CameraGravityContext& context) {
+    if (camera == 0 || kartPlayer == 0) return false;
+
+    const u8 playerId = kartPlayer->GetPlayerIdx();
+    KMPAREAExpander& KAE = KMPAREAExpand[playerId];
+
+    if (!KAE.antiGrav && !KAE.configGrav) return false;
+
+    context.playerPos = kartPlayer->GetPosition();
+
+    /*
+     * If floorNormal is valid, use it.
+     * If it is zero, keep the camera's current up vector.
+     */
+    context.up = KAE.floorNormal;
+
+    if (!NormalizeSafe(context.up)) {
+        context.up = CameraVec(*camera, kCameraBaseUpOffset);
+
+        if (!NormalizeSafe(context.up)) {
+            context.up = WorldUp();
+        }
+    }
+
+    const float hopOffset = CameraFloat(*camera, kCameraHopOffset);
+    context.anchorPos = SubVec(
+        context.playerPos,
+        MultiplyVecByFloat(context.up, hopOffset)
+    );
+
+    return true;
+}
+
+/*bool BuildGravityContext(RaceCamera* camera, Kart::Link* kartPlayer, CameraGravityContext& context) {
     if (camera == 0 || kartPlayer == 0) return false;
     if (!TryGetCameraUp(kartPlayer, context.up)) return false;
 
@@ -41,7 +89,7 @@ bool BuildGravityContext(RaceCamera* camera, Kart::Link* kartPlayer, CameraGravi
     const float hopOffset = CameraFloat(*camera, kCameraHopOffset);
     context.anchorPos = SubVec(context.playerPos, MultiplyVecByFloat(context.up, hopOffset));
     return true;
-}
+}*/
 
 void UpdateCameraTargetImpl(float positionInterp, float topDotInterp, float heightInterp, RaceCamera* camera, GameCamValues* values,
                             Kart::Link* kartPlayer, Vec3* playerPos) {
@@ -151,7 +199,9 @@ void UpdateCameraRollWithGravity(RaceCamera* camera, Kart::Link* kartPlayer) {
                               : 0;
     float rollDelta = kCameraRollStep * static_cast<float>(hopStickX);
     if (kartPlayer->GetType() == INSIDE_BIKE) rollDelta = -rollDelta;
+    rollDelta = Clamp(rollDelta, kCameraRollDeltaLimit, -kCameraRollDeltaLimit); // experimental clamp
     roll += rollDelta;
+    
 
     float maxRoll = (status->bitfield4 & kStatusBitfield4AutomaticDrift) != 0 ? kCameraRollLimitAuto : kCameraRollLimit;
     const float dot = Clamp(Dot(camera->angleOfRotAroundPlayer, cameraUp), -1.0f, 1.0f);
@@ -159,7 +209,7 @@ void UpdateCameraRollWithGravity(RaceCamera* camera, Kart::Link* kartPlayer) {
     if (tiltDegrees < 0.0f) maxRoll += kCameraPitchRecover * Abs(tiltDegrees);
 
     if (roll > maxRoll) roll = maxRoll;
-    if (roll < -maxRoll) roll = -maxRoll;
+    if (roll < -maxRoll) roll = -maxRoll; // no absolute roll limit
 }
 kmCall(0x805a2450, UpdateCameraRollWithGravity);
 
@@ -187,32 +237,27 @@ void FinalizeCameraWithGravity(float upInterp, RaceCamera* camera, Kart::Link* k
         return;
     }
 
-    Vec3 desiredUp = KAE.floorNormal;
+    Vec3 desiredUp = GetUp(holder.physics->mainRot);
     if (!NormalizeSafe(desiredUp)) desiredUp = context.up;
 
     Vec3& smoothedUp = CameraVec(*camera, kCameraSmoothedUpOffset);
     if (!NormalizeSafe(smoothedUp)) smoothedUp = desiredUp;
 
-    float blend = Clamp(upInterp, 0.0f, 1.0f);
+    // Limit how much the camera up vector can change per frame.
+    Vec3 delta = SubVec(desiredUp, smoothedUp);
+    const float deltaLength = EGG::Math::Sqrt(Dot(delta, delta));
+
+    if (deltaLength > kCameraRollDecayAuto) {
+        delta = MultiplyVecByFloat(delta, kCameraRollDecayAuto / deltaLength);
+    }
+
+    smoothedUp = NormalizedOrFallback(AddVec(smoothedUp, delta), desiredUp);
+
+    float blend = Clamp(upInterp, 0.0f, 1.0f); 
     if (blend < kCameraGravityUpMinBlend) blend = kCameraGravityUpMinBlend;
 
-    smoothedUp = MultiplyVecByFloat(AddVec(smoothedUp, SubVec(desiredUp, smoothedUp)), blend);
-    smoothedUp = NormalizedOrFallback(smoothedUp, desiredUp);
     CameraVec(*camera, kCameraBaseUpOffset) = smoothedUp;
-
-    Vec3 right = Cross(smoothedUp, lookDir);
-    Vec3 worldRight = MakeVec(1.0f, 0.0f, 0.0f);
-    if (!NormalizeSafe(right)) {
-        right = Cross(context.up, lookDir);
-        if (!NormalizeSafe(right)) right = BuildPerpendicularInPlane(lookDir, context.up, worldRight);
-    }
-
-    BaseUp(*camera) = Cross(lookDir, right);
-    BaseUp(*camera) = NormalizedOrFallback(BaseUp(*camera), smoothedUp);
-
-    if (Dot(BaseUp(*camera), context.up) < kCameraGravityUpMinDot) {
-        BaseUp(*camera) = NormalizedOrFallback(context.up, WorldUp());
-    }
+    BaseUp(*camera) = smoothedUp;
 
     CameraVec(*camera, kCameraLastUpOffset) = BaseUp(*camera);
     CameraVec(*camera, kCameraSmoothedUpOffset) = BaseUp(*camera);
@@ -222,6 +267,8 @@ void FinalizeCameraWithGravity(float upInterp, RaceCamera* camera, Kart::Link* k
     if (mode == 0) {
         BaseTarget(*camera) = AddVec(BaseTarget(*camera), MultiplyVecByFloat(BaseUp(*camera), CameraFloat(*camera, kCameraField110Offset)));
     }
+
+    Vec3 right = Cross(smoothedUp, lookDir);
 
     if (camera->sub338 != 0) {
         sOriginalUpdateSub338(camera->sub338);

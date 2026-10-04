@@ -50,15 +50,19 @@ static void EarlyPhysicsUpdate(Kart::Physics& physics, float dt, float maxSpeed,
         UpdateLift(*movement, physics, playerId);
     }
 
-    /*if ((KAE.ground || KAE.hop) && !KAE.jumped && KAE.onRail) RailRidePhysics(physics);
-    if (KAE.onRail && KAE.ground) {
-        RailRideRotation(*movement, *physics, *status, playerId);
-    }*/
+    if (KAE.onRail && KAE.ground && !KAE.isRailRiding && !KAE.jumped) RailRideStart(physics, playerId);
+    if (KAE.isRailRiding) {
+        RailRidePhysics(physics, * movement, playerId);
+        RailRideRotation(physics, playerId);
+        DetermineNextPoint(physics, *movement, playerId);
+        RailRideStop(playerId);
+    }
+    RailRideJump(*movement, physics, playerId);
 
     if (KAE.teleported) RotateSpeedAfterTP(*movement, physics, playerId);
     if (KAE.portal) Teleportation(physics, playerId);
 
-    //if (KAE.onRail && !KAE.prevOnRail && KAE.ground) Stopper(physics);
+    if (KAE.onRail && !KAE.prevOnRail && KAE.ground) Stopper(physics);
     
     PrevPhysicsState(playerId);
 
