@@ -6,7 +6,7 @@
 #include <MarioKartWii/Math/Vector.hpp>
 #include <KAE/KAEMath.hpp>
 
-// This is just a storage room so that everything is connected basically. The structure should probably be different but it works and that's all I care about for now.
+// This is just a storage room so that everything is connected basically.
 
 namespace Kart {
 class Status;
@@ -65,6 +65,7 @@ struct KMPAREAExpander {
     bool portal;
     bool launch;
 
+    bool camera;
 
     // Gravity values
     float AREAGravity;
@@ -88,6 +89,7 @@ struct KMPAREAExpander {
     Vec3 antiGravVec;
     Vec3 cameraVec;
     Vec3 floorNormal;
+    Vec3 floorNormal0;
 
     bool rotatedinAir;
 
@@ -106,6 +108,7 @@ struct KMPAREAExpander {
     bool brake;
     bool drift;
     bool hop;
+    bool rampBoost;
     bool justTricked;
     bool inATrick;
     bool mtBoost;
@@ -211,7 +214,7 @@ void PointGravity(Kart::Movement& movement, Kart::Physics& physics, u8 playerId)
 
 void UnderWaterPhysics(Kart::Movement& movement, Kart::Physics& physics, const Kart::Status& status, u8 playerId);
 
-void RailRideState(Input::State* inputState, Kart::Status& status, u8 playerId);
+void RailRideState(Input::State* inputState,Kart::Movement& movement, Kart::Status& status, u8 playerId);
 
 void AirBoost(Kart::Movement& movement, u8 playerId);
 
@@ -241,7 +244,7 @@ void RailRidePhysics(Kart::Physics& physics, Kart::Movement& movement, u8 player
 void RailRideRotation(Kart::Physics& physics, u8 playerId);
 void RailRideEject(Input::State& inputState, Kart::Status& status, u8 playerId);
 void RailRideJump(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
-void RailRideStop(u8 playerId);
+void RailRideStop(Kart::Movement& movement, u8 playerId);
 
 // anti gravity
 void AntiGravPhysics(Kart::Physics& physics, u8 playerId);

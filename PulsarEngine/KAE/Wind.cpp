@@ -6,8 +6,7 @@
 
 
 // Wind [BlueLeopard]
-// No one will probably ever use this, it's a boring and niche mechanic and I wouldn't be surprised if it doesn't even work. Unimportant.
-
+// Make it work with POTI
 namespace MKWG {
 namespace Race {
 

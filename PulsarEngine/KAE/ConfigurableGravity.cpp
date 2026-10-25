@@ -61,6 +61,10 @@ void ConfigurableGravity(Kart::Physics& physics, u8 playerId) { // updates gravi
         KAE.upDown = (kmp->areaSection->GetHolder(KAE.ConfigurableGravity)->raw->routeId == 1) ? 1.0f : -1.0f;
         float configGravity = KAE.upDown * kmp->areaSection->GetHolder(KAE.ConfigurableGravity)->raw->setting2 / 100.0f;
         physics.gravity = configGravity;
+        KAE.camera = (kmp->areaSection->GetHolder(KAE.ConfigurableGravity)->raw->camera == 1) ? true : false;
+    }
+    if (KAE.antiGrav) {
+        KAE.camera = (kmp->areaSection->GetHolder(KAE.AntiGravity)->raw->camera == 1) ? true : false;
     }
     if (KAE.pointGrav) {
         physics.gravity = 0.0f;

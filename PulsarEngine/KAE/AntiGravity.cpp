@@ -9,6 +9,7 @@
 #include <MarioKartWii/Kart/KartSub.hpp>
 #include <MarioKartWii/KMP/KMPManager.hpp>
 #include <KAE/KMPAREAExpander.hpp>
+#include <core/rvl/OS/OS.hpp>
 
 // anti-gravity [BlueLeopard] 
 
@@ -30,25 +31,23 @@ static bool IsAntiGravPhysics(const Kart::Physics* physics) {
     return false;
 }
 
-// Vanilla only does totalForce.y += Flinear.y, which is correct for world-up gravity but
-// collapses (or slides) under redirected gravity. Use the raw spring force (along the
-// suspension axis / local down) as the linear contribution instead.
 void ApplyWheelSuspensionAntiGrav(Kart::Physics* physics, const Vec3& suspTop, const Vec3& Flinear, const Vec3& Frot, bool ignoreX) {
-    if (IsAntiGravPhysics(physics)) {
-        physics->normalAcceleration = AddVec(physics->normalAcceleration, Frot);
-    }
-    else {
-        physics->normalAcceleration.y += Flinear.y;
-    }
+    if (physics == nullptr) return;
 
+    if (IsAntiGravPhysics(physics)) physics->normalAcceleration = Frot;
+    else physics->normalAcceleration.y += Flinear.y;
+    
     Vec3 fBody;
     physics->fullRot.RotateVectorConjugate(Frot, fBody);
+
     Vec3 r = SubVec(suspTop, physics->position);
     Vec3 rBody;
     physics->fullRot.RotateVectorConjugate(r, rBody);
+
     Vec3 torque = Cross(rBody, fBody);
     if (ignoreX) torque.x = 0.0f;
     torque.y = 0.0f;
+
     physics->normalRotVec = AddVec(physics->normalRotVec, torque);
 }
 kmBranch(0x805b6150, ApplyWheelSuspensionAntiGrav);
@@ -65,6 +64,8 @@ void AntiGravity(Kart::Movement& movement, u8 playerId) {
         }
 
         if (KAE.ground) {
+            Vec3 up = KAE.floorNormal;
+            up.Normalize();
             const float antiGravityStrength = 1.3f;
             KAE.antiGravVec = MultiplyVecByFloat(KAE.floorNormal, -antiGravityStrength);
         }
@@ -78,27 +79,20 @@ void AntiGravPhysics(Kart::Physics& physics, u8 playerId) {
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
     physics.gravity = 0.0f;
+
     if (KAE.ground && !KAE.hop) {
-        // Keep suspension support, but only along anti-gravity up. Zeroing normalAcceleration
-        // stopped slope slide, but also removed the force that holds the chassis up.
         Vec3 up = KAE.floorNormal;
         up.Normalize();
         float alongUp = Dot(physics.normalAcceleration, up);
         physics.normalAcceleration = MultiplyVecByFloat(up, alongUp);
-
-        // Same gravity the airborne path uses, so ride height matches flat-road equilibrium.
-        physics.speed0 = AddVec(physics.speed0, KAE.antiGravVec);
+        physics.speed0 = Vec3(0,0,0); // make sure no weird gravity related things happen while on the ground
     }
     else if (!KAE.ground) {
         physics.speed0 = AddVec(physics.speed0, KAE.antiGravVec); // apply the Anti Gravity to speed0
         if (KAE.air20) physics.rotVec2.x = physics.rotVec2.y = physics.rotVec2.z = 0.0f; // Disables rotations in the air. Useful for now, but should be changed later to allow rotations while keeping the kart to Anti Gravity upright
     }
-
-    if (!KAE.drift && !KAE.inATrick&& !KAE.hop) {
-        MatchPitchAndRollToGround(physics, KAE.floorNormal);
-
-        if (KAE.ground) physics.stabilizationFactor = 0.0f; // Set physics.stabilizationFactor to 0 so Mario Kart Wii doesn't change the rotation
-    }
+    MatchPitchAndRollToGround(physics, KAE.floorNormal);
+    physics.stabilizationFactor = 0.0f; // Set physics.stabilizationFactor to 0 so Mario Kart Wii doesn't change the rotation
 }
 
 // fixes accelerating to worldDown [Melg]

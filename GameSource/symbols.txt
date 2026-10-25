@@ -2373,7 +2373,7 @@ Update__Q126ControlsManipulatorManagerFv = 0x805F1F40
 Update__Q14PageFv = 0x80602338
 Update__Q15LightFv = 0x80560D20
 Update__Q17ObjInfoFR4Vec3 = 0x807BD8E8
-Update__Q17SectionFv = 0x806224F8
+Update__7SectionFv = 0x806224F8
 Update__Q18ElineMgrFv = 0x8052D888
 Update__Q18GlobeMgrFv = 0x80750344
 Update__Q18RaceinfoFv = 0x805331B4
@@ -9770,6 +9770,7 @@ __vt__Q33EGG12ProcessMeter10CpuMonitor = 0x802a3d60
 Set__Q23EGG5QuatfFffff = 0x80239dfc
 RotateVector__Q23EGG5QuatfFRCQ23EGG8Vector3fRQ23EGG8Vector3f = 0x8023a2d0
 MakeVectorRotation__Q23EGG5QuatfFRQ23EGG8Vector3fRQ23EGG8Vector3f = 0x8023a788
+SetAxisRotation__Q23EGG5QuatfFRCQ23EGG8Vector3ff = 0x8023A0A0
 SlerpTo__Q23EGG5QuatfCFRCQ23EGG5QuatfRQ23EGG5Quatff = 0x8023a5c4
 #Vector3f
 Mult__Q23EGG5QuatfFRCQ23EGG5QuatfRCQ23EGG8Vector3fRQ23EGG5Quatf = 0x8023a540
@@ -10949,7 +10950,6 @@ U8_RED6= 0x80895CE9
 U8_GREEN6= 0x80895CEB
 U8_BLUE6= 0x80895CED
 U8_ALPHA6= 0x80895CEF
-SetAxisRotation__Q23EGG5QuatfFRCQ23EGG8Vector3ff = 0x8023A0A0
 
 
 #RuntimeWrite

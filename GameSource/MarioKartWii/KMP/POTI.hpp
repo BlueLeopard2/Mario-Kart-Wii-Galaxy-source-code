@@ -12,7 +12,7 @@ struct POTI { //routes
     u16 pointCount;
     bool isCurved;
     bool isNotCyclic;
-    // POTIPoint points[pointCount]; // each entry has an array of points
+    POTIPoint points[]; // each entry has an array of points
 };
 
 typedef struct KMPBlock<POTI> POTIBlock;

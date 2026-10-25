@@ -10,7 +10,7 @@
 #include <MarioKartWii/Kart/KartStatus.hpp>
 #include <KAE/KMPAREAExpander.hpp>
 
-// This file holds recurring math stuff, not that interesting except for maybe the last couple
+// This file holds recurring math
 
 // general math
 static inline float Clamp(float x, float minVal, float maxVal) {
@@ -272,7 +272,7 @@ static inline Vec3 FindClosestPoint(Vec3 A, Vec3 B, Vec3 C) {
     Vec3 AC = SubVec(C, A);
 
     float t = (AC.x * AB.x + AC.y * AB.y + AC.z * AB.z) / (AB.x * AB.x + AB.y * AB.y + AB.z * AB.z);
-    Clamp(t, -1.0f, 1.0f);
+    t = Clamp(t, -1.0f, 1.0f);
 
     Vec3 P;
     P.x = A.x + t * AB.x;

@@ -49,7 +49,7 @@ KMPAREAExpander::KMPAREAExpander() :
     windy(false), airSpeedUp(false),
     onRail(false), isRailRiding(false),
     underWater(false), onWater(false),
-    portal(false),
+    portal(false), camera(false),
     prevUnderWater(false),
 
     AREAGravity(0.0f), upDown(0.0f), underWaterGravity(0.0f),
@@ -66,8 +66,8 @@ KMPAREAExpander::KMPAREAExpander() :
     airBooster(0.0f), airBoosterDuration(0.0f),
 
     accelerate(false), brake(false), drift(false), hop(false),
-    justTricked(false), inATrick(false), mtBoost(false), stopped(false),
-    wall(false), ground(false), air20(false), wheelie(false),
+    rampBoost(false), justTricked(false), inATrick(false), mtBoost(false), 
+    stopped(false), wall(false), ground(false), air20(false), wheelie(false),
 
     mega(false), mushroom(false), star(false),
     shocked(false), feather(false), oob(false), respawn(false),
@@ -101,7 +101,8 @@ KMPAREAExpander::KMPAREAExpander() :
     antiGravVec.x = antiGravVec.y = antiGravVec.z =
     flightDir.x = flightDir.y = flightDir.z =
     cameraVec.x = cameraVec.y = cameraVec.z =
-    floorNormal.x = floorNormal.y = floorNormal.z = 0.0f;
+    floorNormal.x = floorNormal.y = floorNormal.z =
+    floorNormal0.x = floorNormal0.y = floorNormal0.z =  0.0f;
 }
 
 void KMPAREAExpander::Reset() {
@@ -139,6 +140,8 @@ void KMPAREAExpander::Reset() {
 
     portal = false;
 
+    camera = false;
+
     AREAGravity = 0.0f;
     upDown = 0.0f;
     underWaterGravity = 0.0f;
@@ -160,7 +163,8 @@ void KMPAREAExpander::Reset() {
     antiGravVec.x = antiGravVec.y = antiGravVec.z =
     flightDir.x = flightDir.y = flightDir.z =
     cameraVec.x = cameraVec.y = cameraVec.z =
-    floorNormal.x = floorNormal.y = floorNormal.z = 0.0f;
+    floorNormal.x = floorNormal.y = floorNormal.z = 
+    floorNormal0.x = floorNormal0.y = floorNormal0.z = 0.0f;
 
     rotatedinAir = false;
 
@@ -171,6 +175,7 @@ void KMPAREAExpander::Reset() {
     brake = false;
     drift = false;
     hop = false;
+    rampBoost = false;
     justTricked = false;
     inATrick = false;
     mtBoost = false;
@@ -249,7 +254,6 @@ bool UpdateAREAFlag(s16 areaIndex, bool prevFlag, u8 playerId, u8 mechNum) {
         KAE.flagKCLStay[mechNum] = false;
         return false;
     }
-    if (KAE.flagPermStay[mechNum]) return true;
 
     u8 checkpointCheck = kmp->areaSection->GetHolder(areaIndex)->raw->camera;
     u16 padding = kmp->areaSection->GetHolder(areaIndex)->raw->unknown_0x2e;
@@ -259,15 +263,30 @@ bool UpdateAREAFlag(s16 areaIndex, bool prevFlag, u8 playerId, u8 mechNum) {
     if (padding & 0x100 && !KAE.ground) return false; // only when on ground
     if (padding & 0x200 && (KAE.ground || !KAE.air20)) return false; // only when in air
     if (padding & 0x800 && KAE.justTricked) return false;
-    //if (checkpointCheck < raceInfo->checkpoint && checkpointCheck != 0) return false;
-    if (targetKCL < 0x1F) {
-        if ((padding & 0x4000) && KAE.kclFlag != 0) KAE.flagKCLStay[mechNum] = ((KAE.kclFlag & targetKCLFlag) != 0); // if 14th bit is true, mechanic stays activated until different KCL type is touched
+    
+    
+    if (KAE.flagPermStay[mechNum]) return true;
+
+    bool boostPanel = false;
+    bool offRoad = false;
+    if ((padding & 0x20) && (KAE.kclFlag == 0x40 || KAE.kclFlag == 0x80)) {
+        boostPanel = true;
+  
+    }
+    else if ((padding & 0x40) && (KAE.kclFlag == 0x4 || KAE.kclFlag == 0x8 || KAE.kclFlag == 0x10)) {
+        offRoad = true;
+
+    }
+
+    if (targetKCL != 0xFF) {
+        if (KAE.kclFlag != 0 && (padding & 0x4000)) KAE.flagKCLStay[mechNum] = (((KAE.kclFlag & targetKCLFlag) != 0) || boostPanel || offRoad); // if 14th bit is true, mechanic stays activated until different KCL type is touched
         if ((KAE.kclFlag & targetKCLFlag) != 0) {
             if (padding & 0x8000) KAE.flagPermStay[mechNum] = true;
             return true;
-        }    
+        }
         if (KAE.flagKCLStay[mechNum]) return true;
-        
+
+        if (boostPanel || offRoad) return true;
         return false;
     }
 
@@ -323,6 +342,7 @@ void Effects(const Kart::Status& status, u8 playerId) {
     KAE.mega        = (bitfield2 & 0x8000) != 0 || (bitfield2 & 0x20000000) != 0;
     KAE.stopped     = (bitfield2 & 0x40000) != 0;
     KAE.shocked     = (bitfield2 & 0x80) != 0 || (bitfield2 & 0x10000) != 0;
+    KAE.rampBoost   = (bitfield0 & 0x80000000) != 0;
     KAE.justTricked = (bitfield1 & 0x20) != 0;
     KAE.inATrick    = (bitfield1 & 0x40) != 0;
     KAE.wheelie     = (bitfield0 & 0x20000000) != 0;
@@ -346,6 +366,8 @@ void Effects(const Kart::Status& status, u8 playerId) {
         KAE.kclFlag |= floorData.closestFloorFlags;
         if (floorData.floorNor.x != 0.0f || floorData.floorNor.y != 0.0f || floorData.floorNor.z != 0.0f) KAE.floorNormal = floorData.floorNor;
     }
+    Kart::CollisionData& floorData = status.link->GetWheelPhysicsCollisionData(wheelCount-1);
+    if (floorData.floorNor.x != 0.0f || floorData.floorNor.y != 0.0f || floorData.floorNor.z != 0.0f) KAE.floorNormal0 = floorData.floorNor;
 }
 
 void FindStats(const Kart::Status& status, Kart::Movement* movement, u8 playerId) {
@@ -410,7 +432,7 @@ void KMP(Kart::Sub& sub, u8 playerId) {
     // UnderWaterPhysics(*movement, *physics, *status, playerId)
     GliderState(*physics, playerId);
     
-    if (KAE.onRail && KAE.isRailRiding) RailRideState(inputState, *status, playerId);
+    if (KAE.onRail && KAE.isRailRiding) RailRideState(inputState, *movement, *status, playerId);
 
     AirBoost(*movement, playerId);
     Wind(*physics, playerId);

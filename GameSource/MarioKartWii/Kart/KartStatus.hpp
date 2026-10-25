@@ -43,7 +43,7 @@ public:
     0x100000    20 boost
     0x800000    23 air start
     0x1000000   24 stick right
-    0x2000000   26 mushroom boost
+    0x4000000   26 mushroom boost
     0x8000000   27 charging a slipstream
     0x10000000  28 drift (auto)
     0x20000000  29 wheelie

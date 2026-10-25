@@ -33,6 +33,7 @@ delayFrames (u16) -> setting1
 for the animations:
 object->ModelDirector->scnMdlEx->ScnMdl->Material->Color->Alpha still needs to be added
 */
+
 namespace MKWG {
 namespace Race {
 
@@ -82,16 +83,16 @@ bool ConditionalObjAction(u8 playerId) {
 
     if (!KAE.condObj) return false;
 
-    const u16 areaSetting1 = kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->setting1;
+    const u16 routeId = kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->routeId;
     u16 currentLap = raceInfoPlayer->currentLap;
 
     for (u16 i = 0; i < kmp->gobjSection->pointCount; i++) {
         KMP::Holder<GOBJ>* holder = kmp->gobjSection->holdersArray[i];
         if (!holder || !holder->raw) continue;
-        if (holder->raw->padding != areaSetting1) continue;
+        if (holder->raw->padding != routeId) continue;
 
         const u8 correctLap = (kmp->areaSection->GetHolder(KAE.ConditionalObject)->raw->enemyRouteId >> 3) & 0x7;
-        if (currentLap == 0 || currentLap > 50) currentLap = 1;
+        if (currentLap == 0) currentLap = 1;
         if (correctLap != 0 && correctLap != currentLap) continue;
         return true;
     }

@@ -68,8 +68,8 @@ void GliderMovement(Kart::Movement& movement, u8 playerId) {
         speedChange = KAE.hardSpeedLimit / KAE.baseSpeed;
     }
     if (Abs(KAE.xInput) > 0.1f) {
-        targetSpeed *= (1/Abs(KAE.xInput)) * 0.85f;
-        speedChange *= (1/Abs(KAE.xInput)) * 0.85f;
+        targetSpeed *= (1/Abs(KAE.xInput)) * 0.9f;
+        speedChange *= (1/Abs(KAE.xInput)) * 0.9f;
     }
     if (KAE.yInput < -0.1f) {
         targetSpeed *= (1/Abs(KAE.yInput)) * 0.75f;

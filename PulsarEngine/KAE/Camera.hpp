@@ -31,8 +31,8 @@ const float kCameraFallStep = 10.0f;
 const float kCameraFallMin = -50.0f;
 const float kCameraZipperRise = 100.0f;
 const float kCameraZipperFall = -100.0f;
-const float kCameraRollDecay = 1.0f;
-const float kCameraRollDecayAuto = 0.2f;
+const float kCameraRollDecay = 0.125f;
+const float kCameraRollDecayAuto = 0.050f;
 const float kCameraRollStep = -0.5f;
 const float kCameraRollLimit = 15.0f;
 const float kCameraRollLimitAuto = 5.0f;
@@ -133,7 +133,8 @@ Vec3 BuildPerpendicularInPlane(const Vec3& planeNormal, const Vec3& vector, cons
     Vec3 planeComponent = vector;
     if (!NormalizeSafe(planeComponent)) return NormalizedOrFallback(fallback, WorldUp());
 
-    Vec3 result = SubVec(planeNormal, MultiplyVecByFloat(planeComponent, Dot(planeNormal, planeComponent)));
+    Vec3 result = SubVec(planeComponent, MultiplyVecByFloat(planeNormal, Dot(planeComponent, planeNormal))
+);
     if (NormalizeSafe(result)) return result;
     return NormalizedOrFallback(fallback, WorldUp());
 }

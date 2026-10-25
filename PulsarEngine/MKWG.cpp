@@ -99,4 +99,3 @@ kmWrite32(0x8064DB2C, 0x60000000);
 kmWrite32(0x8073ef10, 0x60000000);
 
 } // namespace MKWG
-
