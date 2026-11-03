@@ -1,23 +1,167 @@
-KMP AREA Expander License
+KMP AREA Expander Licence
+
 Copyright (c) 2026 BlueLeopard
 
-Permission is granted to use, compile, and distribute the unmodified
-files contained in the folder PulsarEngine/KAE in any project, including commercial projects.
+All rights reserved, except for the permissions explicitly granted below.
 
-Non-functional modifications are permitted. Non-functional modifications
-are defined as changes that do not alter runtime behavior, logic,
-algorithms, data flow, interfaces, or observable output.
-Examples of non-functional modifications include renaming namespaces, formatting changes, comments,
-or integration-related identifier adjustments.
+This licence governs the use, modification, compilation, and distribution of the KMP AREA Expander (KAE), including the code contained in the folder PulsarEngine/KAE, subject to the exclusions and limitations specified below.
 
-Any functional modification, including but not limited to altering
-algorithms, control flow, calculations, behavior, interfaces,
-or internal structure affecting execution, is strictly prohibited
-without explicit written permission.
+1. Scope and Copyright Ownership
 
-Creation or distribution of derivative works based on functional
-modifications of these files is prohibited.
+This licence applies to the original code and contributions within PulsarEngine/KAE for which BlueLeopard holds the relevant copyright or has been authorised to grant the permissions described in this licence.
 
-This license applies only to the version of the files
-in which it is included.
-Future versions may be released under different terms.
+The following components are explicitly excluded from the distribution restrictions of this licence:
+
+Conditional Objects
+
+Camera code
+
+These components contain substantial contributions from other authors and are therefore excluded from the distribution restrictions of this licence.
+
+BlueLeopard has also made substantial modifications and additions to these components. Their exclusion does not affect the recognition of BlueLeopard's authorship of those contributions or the copyright held in any independently copyrightable contributions.
+
+The use, modification, and distribution of these components are governed by the respective rights of their contributors and any applicable licensing agreements. This exclusion does not grant or imply additional permissions beyond those held by the respective copyright holders.
+
+All remaining KAE components for which BlueLeopard holds the relevant rights are referred to as "Covered KAE Code" throughout this licence.
+
+2. Personal Use and Development
+
+Anyone who lawfully obtains a copy of Covered KAE Code is permitted to use, copy, modify, compile, and experiment with it for personal development, testing, and other private purposes without requesting prior permission from the copyright holder.
+
+This permission includes, but is not limited to:
+
+Studying and experimenting with the source code.
+
+Modifying existing functionality and implementing new functionality.
+
+Compiling Covered KAE Code into personal projects.
+
+Testing and debugging projects containing Covered KAE Code.
+
+Creating derivative works for private development purposes.
+
+These permissions apply to both commercial and non-commercial development, provided that no distribution takes place without the permission required under Section 3.
+
+Private use and development do not require direct contact with the copyright holder.
+
+This permission does not include the right to distribute or share Covered KAE Code or any derivative work.
+
+3. Distribution and Sharing Restrictions
+
+Any distribution or sharing of Covered KAE Code requires prior explicit written permission from the copyright holder.
+
+This restriction applies to, but is not limited to:
+
+Distributing original or modified Covered KAE source code.
+
+Distributing compiled versions of Covered KAE Code.
+
+Incorporating Covered KAE Code into software, games, modifications, or other projects that are distributed to others.
+
+Sharing builds containing Covered KAE Code with developers, collaborators, beta testers, or other project participants.
+
+Distributing Covered KAE Code through public or private repositories, websites, file-sharing services, Discord servers, direct messages, or other communication platforms.
+
+Distribution includes sharing with a limited or private audience. The fact that a project is unreleased, access-restricted, or intended only for testing does not exempt it from this requirement.
+
+Permission to distribute must be granted separately from permission to use, modify, or compile Covered KAE Code.
+
+Permission to distribute must explicitly identify the project and the intended form and scope of distribution. Permission granted for one project does not automatically extend to other projects or distributions.
+
+No permission to sublicense, redistribute, or otherwise extend distribution rights to third parties is implied.
+
+4. Permission Agreements
+
+The copyright holder may grant distribution permission through explicit written agreements, including Discord direct messages, email, or other written communication.
+
+Any such agreement may specify additional conditions, including:
+
+The project and version covered by the permission.
+
+The permitted forms and scope of distribution.
+
+Attribution and copyright notice requirements.
+
+Restrictions on modification or redistribution.
+
+Requirements concerning commercial use.
+
+The duration of the permission.
+
+Other conditions considered necessary by the copyright holder.
+
+Permission is granted only to the individual or organisation, project, and distribution scope explicitly identified in the agreement.
+
+Permission may not be transferred to another individual or organisation, or extended to another project, without additional written approval.
+
+5. Communication and Accountability
+
+Any individual or organisation receiving distribution permission must maintain direct communication with the copyright holder.
+
+The recipient must:
+
+Designate an individual responsible for the project's use and distribution of Covered KAE Code.
+
+Provide and maintain a direct means of communication with that individual.
+
+Notify the copyright holder of any changes to the designated individual or their contact information.
+
+Remain reasonably available for communication concerning the use and distribution of Covered KAE Code.
+
+The copyright holder may contact the designated individual regarding compliance with this licence and the conditions of the permission agreement.
+
+6. Commercial Use
+
+No permission for commercial distribution is implied by this licence.
+
+Commercial distribution, including distribution through projects that generate revenue, requires explicit written approval from the copyright holder.
+
+The copyright holder reserves the right to establish licensing fees or other financial conditions when granting commercial distribution permission.
+
+Private development and experimentation remain permitted under Section 2, regardless of whether the intended project is commercial or non-commercial.
+
+7. Withdrawal and Termination of Permission
+
+The copyright holder reserves the right to refuse, limit, modify, or withdraw permissions granted under this licence or through individual permission agreements, subject to applicable law and any contractual obligations.
+
+Unless otherwise agreed, the copyright holder may terminate a distribution permission by providing written notice to the recipient.
+
+Upon termination, the recipient must:
+
+Stop distributing Covered KAE Code and any software containing it.
+
+Remove distributed copies from locations under their control.
+
+Stop providing access to distributed builds and repositories.
+
+Comply with any reasonable removal or discontinuation requirements specified in the termination notice, subject to applicable law.
+
+The copyright holder may also withdraw permissions for private use and development, subject to applicable law and any contractual obligations.
+
+Termination does not automatically establish that copies already obtained by third parties can be recalled or that their existing rights can be extinguished. Such matters remain subject to applicable law and any relevant agreements.
+
+8. Existing Versions and Permissions
+
+This licence applies only to the version of Covered KAE Code in which it is included and subsequent versions explicitly released under these terms.
+
+Previously released versions remain subject to the terms under which they were originally released, unless otherwise agreed in writing or otherwise permitted by applicable law.
+
+Permissions granted under previous licences are not automatically replaced or revoked by the publication of this licence.
+
+9. Copyright Ownership
+
+The copyright holder retains all rights to Covered KAE Code not explicitly granted through this licence or a separate written permission agreement.
+
+Nothing in this licence transfers ownership of the copyright or grants any ownership interest in Covered KAE Code.
+
+Any modifications or derivative works remain subject to the copyright and distribution restrictions applicable to the original Covered KAE Code.
+
+The authorship and copyright ownership of third-party contributions remain with their respective authors and copyright holders.
+
+10. Disclaimer of Warranty and Liability
+
+Covered KAE Code is provided "as is", without warranty of any kind, express or implied.
+
+The copyright holder makes no guarantees regarding the functionality, reliability, compatibility, or suitability of Covered KAE Code for any particular purpose.
+
+To the extent permitted by applicable law, the copyright holder shall not be held liable for damages arising from the use, modification, compilation, or distribution of Covered KAE Code.
