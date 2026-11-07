@@ -45,10 +45,11 @@ void RailRideStart(Kart::Physics& physics, u8 playerId) {
 
     for (u16 i = 0; i < kmp->areaSection->pointCount; i++) {
         if (kmp->FindAREA(physics.position, i, (u8)0x13) != i) continue;
-    
+
         KAE.routeId = kmp->areaSection->GetHolder(i)->raw->routeId;
 
-        if (!kmp->potiSection->GetHolder(KAE.routeId)) return;
+        if (!kmp->potiSection->GetHolder(KAE.routeId)) continue;
+
         float vecLength[255]; // this is not optimal but does the job
         
         for (u8 j = 0; j < kmp->potiSection->GetHolder(KAE.routeId)->raw->pointCount; j++) { // find all points on the route
@@ -64,10 +65,12 @@ void RailRideStart(Kart::Physics& physics, u8 playerId) {
         Vec3 positionSecondNearest = kmp->potiSection->GetHolder(KAE.routeId)->raw->points[secondNearestIndex].position;
         Vec3 closestPoint = FindClosestPoint(positionNearest, positionSecondNearest, physics.position); // Math for finding closest spot
         Vec3 distance = SubVec(physics.position, closestPoint);
+        
         float distanceSquared = distance.x * distance.x + distance.y * distance.y + distance.z * distance.z;
         if (distanceSquared < 300.0f * 300.0f) {
             KAE.isRailRiding = true;
             KAE.nextPoint = Max(nearestIndex, secondNearestIndex);
+            break;
         }
     }
 }
@@ -82,9 +85,9 @@ void RailRidePhysics(Kart::Physics& physics, Kart::Movement& movement, u8 player
     KMP::Manager* kmp = KMP::Manager::sInstance;
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
-    physics.engineSpeed = Vec3(0,0,0);
-    movement.engineSpeed = 0.0f;
-
+    if (KAE.bullet || KAE.hit) return;
+    movement.engineSpeed = movement.acceleration = 0.0f;
+    
     Vec3 target = kmp->potiSection->GetHolder(KAE.routeId)->raw->points[KAE.nextPoint].position;
 
     Vec3 desiredDir = target - physics.position;
@@ -97,7 +100,14 @@ void RailRidePhysics(Kart::Physics& physics, Kart::Movement& movement, u8 player
 
     forward.Normalize();
 
-    physics.speed2 = AddVec(physics.speed2, MultiplyVecByFloat(forward, KAE.baseSpeed));
+    float multiplier = KAE.baseSpeed;
+
+    if (KAE.mushroom || KAE.boost) multiplier *= 1.4f; 
+    if (KAE.star) multiplier *= 105.0f / KAE.baseSpeed;
+    if (KAE.mega || KAE.tc) multiplier *= 95.0f / KAE.baseSpeed;
+    if (KAE.shocked) multiplier *= 0.7f;
+    
+    physics.engineSpeed = AddVec(physics.engineSpeed, MultiplyVecByFloat(forward, multiplier));
 }
 
 void RailRideRotation(Kart::Physics& physics, u8 playerId) {

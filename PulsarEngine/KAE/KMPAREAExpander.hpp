@@ -108,7 +108,7 @@ struct KMPAREAExpander {
     bool brake;
     bool drift;
     bool hop;
-    bool rampBoost;
+    bool boost;
     bool justTricked;
     bool inATrick;
     bool mtBoost;
@@ -125,6 +125,9 @@ struct KMPAREAExpander {
     bool feather;
     bool oob;
     bool respawn;
+    bool hit;
+    bool tc;
+    bool bullet;
     
     u32 kclFlag;
     u32 wheelFlag;
@@ -242,7 +245,6 @@ void DetermineNextPoint(Kart::Physics& physics, Kart::Movement& movement, u8 pla
 void RailRideStart(Kart::Physics& physics, u8 playerId);
 void RailRidePhysics(Kart::Physics& physics, Kart::Movement& movement, u8 playerId);
 void RailRideRotation(Kart::Physics& physics, u8 playerId);
-void RailRideEject(Input::State& inputState, Kart::Status& status, u8 playerId);
 void RailRideJump(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
 void RailRideStop(Kart::Movement& movement, u8 playerId);
 

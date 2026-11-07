@@ -66,11 +66,12 @@ KMPAREAExpander::KMPAREAExpander() :
     airBooster(0.0f), airBoosterDuration(0.0f),
 
     accelerate(false), brake(false), drift(false), hop(false),
-    rampBoost(false), justTricked(false), inATrick(false), mtBoost(false), 
+    boost(false), justTricked(false), inATrick(false), mtBoost(false), 
     stopped(false), wall(false), ground(false), air20(false), wheelie(false),
 
     mega(false), mushroom(false), star(false),
     shocked(false), feather(false), oob(false), respawn(false),
+    hit(false), tc(false), bullet(false),
 
     kclFlag(0), wheelFlag(0),
 
@@ -175,7 +176,7 @@ void KMPAREAExpander::Reset() {
     brake = false;
     drift = false;
     hop = false;
-    rampBoost = false;
+    boost = false;
     justTricked = false;
     inATrick = false;
     mtBoost = false;
@@ -192,6 +193,9 @@ void KMPAREAExpander::Reset() {
     feather = false;
     oob = false;
     respawn = false;
+    hit = false;
+    tc = false;
+    bullet = false;
 
     kclFlag = 0;
     wheelFlag = 0;
@@ -264,29 +268,31 @@ bool UpdateAREAFlag(s16 areaIndex, bool prevFlag, u8 playerId, u8 mechNum) {
     if (padding & 0x200 && (KAE.ground || !KAE.air20)) return false; // only when in air
     if (padding & 0x800 && KAE.justTricked) return false;
     
-    
     if (KAE.flagPermStay[mechNum]) return true;
 
-    bool boostPanel = false;
     bool offRoad = false;
-    if ((padding & 0x20) && (KAE.kclFlag == 0x40 || KAE.kclFlag == 0x80)) {
-        boostPanel = true;
-  
-    }
-    else if ((padding & 0x40) && (KAE.kclFlag == 0x4 || KAE.kclFlag == 0x8 || KAE.kclFlag == 0x10)) {
+    bool boostPanel = false;
+    bool wall = false;
+    if ((padding & 0x40) && (KAE.kclFlag == 0x4 || KAE.kclFlag == 0x8 || KAE.kclFlag == 0x10)) {
         offRoad = true;
 
     }
+    if ((padding & 0x20) && (KAE.kclFlag == 0x40 || KAE.kclFlag == 0x80)) {
+        boostPanel = true;
+    }
+    if ((padding & 0x80) && (KAE.kclFlag == 0x1000 || KAE.kclFlag == 0x2000 || KAE.kclFlag == 0x8000 || KAE.kclFlag == 0x100000 || KAE.kclFlag == 0x2000000 || KAE.kclFlag == 0x40000000 || KAE.kclFlag == 0x80000000)) {
+        wall = true;
+    }
 
     if (targetKCL != 0xFF) {
-        if (KAE.kclFlag != 0 && (padding & 0x4000)) KAE.flagKCLStay[mechNum] = (((KAE.kclFlag & targetKCLFlag) != 0) || boostPanel || offRoad); // if 14th bit is true, mechanic stays activated until different KCL type is touched
+        if (KAE.kclFlag != 0 && (padding & 0x4000)) KAE.flagKCLStay[mechNum] = (((KAE.kclFlag & targetKCLFlag) != 0) || offRoad || boostPanel || wall); // if 14th bit is true, mechanic stays activated until different KCL type is touched
         if ((KAE.kclFlag & targetKCLFlag) != 0) {
             if (padding & 0x8000) KAE.flagPermStay[mechNum] = true;
             return true;
         }
         if (KAE.flagKCLStay[mechNum]) return true;
 
-        if (boostPanel || offRoad) return true;
+        if ( offRoad || boostPanel || wall) return true;
         return false;
     }
 
@@ -336,24 +342,30 @@ void Effects(const Kart::Status& status, u8 playerId) {
     KAE.accelerate  = (bitfield0 & 0x1) != 0;
     KAE.brake       = (bitfield0 & 0x2) != 0;
     KAE.drift       = (bitfield0 & (0x8 | 0x4)) != 0;
-    KAE.ground      = (bitfield0 & (0x400 | 0x800 | 0x1000 | 0x40000)) != 0;
-    KAE.mushroom    = (bitfield0 & 0x4000000) != 0;
-    KAE.star        = (bitfield1 & 0x80000000) != 0;
-    KAE.mega        = (bitfield2 & 0x8000) != 0 || (bitfield2 & 0x20000000) != 0;
-    KAE.stopped     = (bitfield2 & 0x40000) != 0;
-    KAE.shocked     = (bitfield2 & 0x80) != 0 || (bitfield2 & 0x10000) != 0;
-    KAE.rampBoost   = (bitfield0 & 0x80000000) != 0;
+    KAE.hop         = (bitfield0 & 0x80000) != 0;
+    KAE.wheelie     = (bitfield0 & 0x20000000) != 0;
+    KAE.mtBoost     = (bitfield1 & 0x100000) != 0;
+    
     KAE.justTricked = (bitfield1 & 0x20) != 0;
     KAE.inATrick    = (bitfield1 & 0x40) != 0;
-    KAE.wheelie     = (bitfield0 & 0x20000000) != 0;
-    KAE.feather     = (bitfield1 & 0x4000) != 0;
-    KAE.mtBoost     = (bitfield1 & 0x100000) != 0;
+
+    KAE.ground      = (bitfield0 & (0x400 | 0x800 | 0x1000 | 0x40000)) != 0;
+    KAE.boost       = (bitfield0 & 0x100000) != 0;
     KAE.wall        = (bitfield0 & (0x20 | 0x40)) != 0;
-    KAE.hop         = (bitfield0 & 0x80000) != 0;
     KAE.oob         = (bitfield0 & 0x10) != 0;
     KAE.air20       = (status.airtime > 19);
     KAE.respawn     = (bitfield1 & 0x2000) != 0;
-    
+    KAE.hit         = (bitfield1 & 0x1) != 0;
+
+    KAE.mushroom    = (bitfield0 & 0x4000000) != 0;
+    KAE.star        = (bitfield1 & 0x80000000) != 0;
+    KAE.mega        = (bitfield2 & 0x8000) != 0 || (bitfield2 & 0x20000000) != 0;
+    KAE.tc          = (bitfield2 & 20000000) != 0;
+    KAE.bullet      = (bitfield2 & 0x8000000) != 0;
+    KAE.feather     = (bitfield1 & 0x4000) != 0;
+    KAE.stopped     = (bitfield2 & 0x40000) != 0;
+    KAE.shocked     = (bitfield2 & 0x80) != 0 || (bitfield2 & 0x10000) != 0;
+ 
     KAE.xInput = status.stickX;
     KAE.yInput = status.stickY;
     if (status.airtime >= 2 && (!status.bool_0x96 || status.airtime > 19)) KAE.zInput = controllerHolder.inputStates[0].stick.z;

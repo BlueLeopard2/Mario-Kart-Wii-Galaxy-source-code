@@ -21,6 +21,7 @@ void EnterGlider(Kart::Physics& physics, u8 playerId) {
     KAE.yawVel = 0.0f;
 
     KAE.flightDir = GetForward(physics.mainRot);
+    physics.engineSpeed.y *= 0.1f;
 }
 
 void ExitGlider(Kart::Physics& physics, u8 playerId) {
@@ -77,7 +78,7 @@ void GliderMovement(Kart::Movement& movement, u8 playerId) {
     }
     if (KAE.mushroom) {
         targetSpeed = KAE.hardSpeedLimit;
-        speedChange *= 1.4f;
+        speedChange *= 2.5f;
     }
     
     if (gliderSpeed <= targetSpeed) {
@@ -165,7 +166,7 @@ void UpdateLift(Kart::Movement& movement, Kart::Physics& physics, u8 playerId) {
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
     
     const float liftCoeff = 0.0000015f;
-    float speed = movement.engineSpeed;
+    float speed = VecLength(physics.engineSpeed);
 
     float targetLift = liftCoeff * Pow(speed, 3) * KAE.yInput;
 

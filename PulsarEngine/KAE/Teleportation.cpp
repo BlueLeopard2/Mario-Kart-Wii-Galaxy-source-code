@@ -14,22 +14,23 @@ void Teleportation(Kart::Physics& physics, u8 playerId) {
     KMP::Manager* kmp = KMP::Manager::sInstance;
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
-    if (KAE.waitForTeleport >= kmp->areaSection->GetHolder(KAE.Teleport)->raw->setting1) {
-        for (u16 i = 0; i < kmp->cnptSection->pointCount; i++) {
-            KMP::Holder<CNPT>* holder = kmp->cnptSection->holdersArray[i];
-            if (!holder || !holder->raw) continue;
-            
-            if (kmp->areaSection->GetHolder(KAE.Teleport)->raw->routeId == holder->raw->id) {
-                physics.position = holder->raw->destPos;
-
-                Vec3 rot = MultiplyVecByFloat(holder->raw->angle, 3.14159265358979323846f / 180.0f);
-                physics.mainRot.SetRPY(rot.x, rot.y, rot.z);
-                
-                KAE.teleported = true;
-            }
-        }
+    if (KAE.waitForTeleport < kmp->areaSection->GetHolder(KAE.Teleport)->raw->setting1) {
+        KAE.waitForTeleport += 1;
+        return;
     }
-    KAE.waitForTeleport += 1;
+
+    u8 routeId = kmp->areaSection->GetHolder(KAE.Teleport)->raw->routeId;
+    KMP::Holder<CNPT>* holder = kmp->GetHolder<CNPT>(routeId);
+
+    if (!holder || !holder->raw) return;
+
+    physics.position = holder->raw->destPos;
+
+    Vec3 rot = MultiplyVecByFloat(holder->raw->angle, 3.14159265358979323846f / 180.0f);
+    physics.mainRot.SetRPY(rot.x, rot.y, rot.z);
+
+    KAE.teleported = true;
+    
 }
 
 void RotateSpeedAfterTP(Kart::Movement& movement, Kart::Physics& physics, u8 playerId) {
