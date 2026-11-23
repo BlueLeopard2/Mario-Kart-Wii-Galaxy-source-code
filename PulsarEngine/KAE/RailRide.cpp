@@ -16,26 +16,37 @@
 namespace MKWG {
 namespace Race {
 
+void RailRideReset(Kart::Movement& movement, u8 playerId) {
+    KMPAREAExpander& KAE = KMPAREAExpand[playerId];
+
+    if (KAE.isRailRiding || KAE.lastPointReached) movement.engineSpeed = KAE.baseSpeed;\
+
+    KAE.isRailRiding = false;
+    KAE.lastPointReached = false;
+}
+
 void RailRideEject(Kart::Movement& movement, u8 playerId) {   
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
     movement.engineSpeed = KAE.baseSpeed;
-    KAE.isRailRiding = false;
+    KAE.nextPoint = 0;
 }
 
 void DetermineNextPoint(Kart::Physics& physics, Kart::Movement& movement, u8 playerId) {
     KMP::Manager* kmp = KMP::Manager::sInstance;
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
-    for (u16 i = 0; i < kmp->potiSection->pointCount; i++) {
-        // start of nextPoint is already detemined in RailRideStart
-        Vec3 distance = kmp->potiSection->GetHolder(KAE.routeId)->raw->points[KAE.nextPoint].position - physics.position;
-        float length = VecLength(distance);
+    // start of nextPoint is already detemined in RailRideStart
+    Vec3 distance = kmp->potiSection->GetHolder(KAE.routeId)->raw->points[KAE.nextPoint].position - physics.position;
+    float length = VecLength(distance);
 
-        if (length < 250.0f) {
-            KAE.nextPoint +=1;  
-        }
-        if (KAE.nextPoint > kmp->potiSection->GetHolder(KAE.routeId)->raw->pointCount) RailRideEject(movement, playerId);   
+    if (length < 250.0f) {
+        KAE.nextPoint +=1;
+    }
+    if (KAE.nextPoint == (kmp->potiSection->GetHolder(KAE.routeId)->raw->pointCount)) {
+        RailRideEject(movement, playerId);
+        KAE.lastPointReached = true;
+        KAE.isRailRiding = false;
     }
 }
 
@@ -50,35 +61,43 @@ void RailRideStart(Kart::Physics& physics, u8 playerId) {
 
         if (!kmp->potiSection->GetHolder(KAE.routeId)) continue;
 
-        float vecLength[255]; // this is not optimal but does the job
-        
-        for (u8 j = 0; j < kmp->potiSection->GetHolder(KAE.routeId)->raw->pointCount; j++) { // find all points on the route
-            Vec3 distance = physics.position - kmp->potiSection->GetHolder(KAE.routeId)->raw->points[j].position;
-            vecLength[j] = VecLength(distance);
-        }
-        u8 nearestIndex;
-        u8 secondNearestIndex;
+        bool pointFound = false;
+        float smallestDistance = 300.0f;
 
-        FindSmallest2(vecLength, kmp->potiSection->GetHolder(KAE.routeId)->raw->pointCount, nearestIndex, secondNearestIndex);
-
-        Vec3 positionNearest = kmp->potiSection->GetHolder(KAE.routeId)->raw->points[nearestIndex].position;
-        Vec3 positionSecondNearest = kmp->potiSection->GetHolder(KAE.routeId)->raw->points[secondNearestIndex].position;
-        Vec3 closestPoint = FindClosestPoint(positionNearest, positionSecondNearest, physics.position); // Math for finding closest spot
-        Vec3 distance = SubVec(physics.position, closestPoint);
+        for (u8 j = 0; j < kmp->potiSection->GetHolder(KAE.routeId)->raw->pointCount - 1; j++) {
+            Vec3 A = kmp->potiSection->GetHolder(KAE.routeId)->raw->points[j].position;
+            Vec3 B = kmp->potiSection->GetHolder(KAE.routeId)->raw->points[j + 1].position;
         
-        float distanceSquared = distance.x * distance.x + distance.y * distance.y + distance.z * distance.z;
-        if (distanceSquared < 300.0f * 300.0f) {
-            KAE.isRailRiding = true;
-            KAE.nextPoint = Max(nearestIndex, secondNearestIndex);
-            break;
+            Vec3 closestPoint = FindClosestPoint(A, B, physics.position);
+            Vec3 distance = SubVec(physics.position, closestPoint);
+            float length = VecLength(distance);
+        
+            if (length < smallestDistance) {
+                smallestDistance = length;
+                pointFound = true;
+                continue;
+            }
+
+            if (pointFound) {
+                Stopper(physics);
+                KAE.isRailRiding = true;
+                KAE.nextPoint = j + 1;
+                break;
+            }
         }
+    if (KAE.isRailRiding) break;
     }
 }
 
 void RailRideStop(Kart::Movement& movement, u8 playerId) {
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
     
-    if (KAE.oob || !KAE.ground) RailRideEject(movement, playerId);
+    if (KAE.oob) {
+        KAE.nextPoint = 0;
+        KAE.isRailRiding = false;
+        KAE.jumped = false;
+        KAE.lastPointReached = false;
+    }
 }
 
 void RailRidePhysics(Kart::Physics& physics, Kart::Movement& movement, u8 playerId) {
@@ -87,27 +106,20 @@ void RailRidePhysics(Kart::Physics& physics, Kart::Movement& movement, u8 player
 
     if (KAE.bullet || KAE.hit) return;
     movement.engineSpeed = movement.acceleration = 0.0f;
-    
+
     Vec3 target = kmp->potiSection->GetHolder(KAE.routeId)->raw->points[KAE.nextPoint].position;
 
     Vec3 desiredDir = target - physics.position;
-    desiredDir.y = 0.0f;
     desiredDir.Normalize();
 
     Vec3 floorNormal = KAE.floorNormal;
+    if (!KAE.ground) floorNormal = Vec3(0,0,0);
 
     Vec3 forward = desiredDir - MultiplyVecByFloat(floorNormal, Dot(desiredDir, floorNormal));
-
     forward.Normalize();
 
-    float multiplier = KAE.baseSpeed;
-
-    if (KAE.mushroom || KAE.boost) multiplier *= 1.4f; 
-    if (KAE.star) multiplier *= 105.0f / KAE.baseSpeed;
-    if (KAE.mega || KAE.tc) multiplier *= 95.0f / KAE.baseSpeed;
-    if (KAE.shocked) multiplier *= 0.7f;
-    
-    physics.engineSpeed = AddVec(physics.engineSpeed, MultiplyVecByFloat(forward, multiplier));
+    float speed = GetTargetSpeed(KAE.baseSpeed, KAE.mega, KAE.tc, KAE.star, KAE.mushroom, KAE.mtBoost, false, KAE.shocked, false, KAE.feather);
+    physics.engineSpeed = AddVec(physics.engineSpeed, MultiplyVecByFloat(forward, speed));
 }
 
 void RailRideRotation(Kart::Physics& physics, u8 playerId) {
@@ -117,13 +129,12 @@ void RailRideRotation(Kart::Physics& physics, u8 playerId) {
     Vec3 target = kmp->potiSection->GetHolder(KAE.routeId)->raw->points[KAE.nextPoint].position;
 
     Vec3 desiredDir = target - physics.position;
-    desiredDir.y = 0.0f;
     desiredDir.Normalize();
 
     Vec3 floorNormal = KAE.floorNormal;
+    if (!KAE.ground) floorNormal = Vec3(0,0,0);
 
     Vec3 dir = desiredDir - MultiplyVecByFloat(floorNormal, Dot(desiredDir, floorNormal));
-
     dir.Normalize();
 
     Vec3 forward = GetForward(physics.mainRot);
@@ -143,56 +154,44 @@ void RailRideRotation(Kart::Physics& physics, u8 playerId) {
     );
 }
 
-void RailRideState(Input::State* inputState, Kart::Movement& movement, Kart::Status& status, u8 playerId) {
+void RailRideJumpStart(Input::State* inputState, Kart::Physics& physics, Kart::Movement& movement, Kart::Status& status, u8 playerId) {
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
+    
+    if (inputState->motionControlFlick != 0) {
+        RailRideEject(movement, playerId);
 
-    if ((KAE.mtBoost || KAE.mushroom) && inputState->motionControlFlick != 0) {
-        RailRideEject(movement, playerId);
-        KAE.jumpedFast = true;
-        status.trickableTimer = 0x4;
+        KAE.isRailRiding = false;
+        KAE.lastPointReached = false;
         KAE.jumped = true;
-        KAE.height = 9;
-        KAE.railRideJumpDir = KAE.xInput;
-    }
-    else if (inputState->motionControlFlick != 0) {
-        RailRideEject(movement, playerId);
-        KAE.jumpedSlow = true;
+
+        float railRideJumpDir = KAE.xInput;
+        status.airtime = 5;
         status.trickableTimer = 0x4;
-        KAE.jumped = true;
-        KAE.height = 9;
-        KAE.railRideJumpDir = KAE.xInput;
+        
+        KAE.jumpSpeed = GetTargetSpeed(KAE.baseSpeed, KAE.mega, KAE.tc, KAE.star, KAE.mushroom, KAE.mtBoost, false, KAE.shocked, false, KAE.feather);
+
+        Vec3 up = GetUp(physics.mainRot);
+        Vec3 right = GetRight(physics.mainRot);
+
+        float rightForce = 4.0f;
+        KAE.sideVel = MultiplyVecByFloat(right, -railRideJumpDir * rightForce);
+        float upForce = 4.0f;
+        KAE.upVel = MultiplyVecByFloat(up, upForce);
     }
 }
 
-void RailRideJump(Kart::Movement& movement, Kart::Physics& physics, u8 playerId) {
+void RailRideJumpPhysics(Kart::Movement& movement, Kart::Physics& physics, Kart::Status& status, u8 playerId) {
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
-    // relative height
-    Vec3 up = GetUp(physics.mainRot);
+    KAE.upVel = MultiplyVecByFloat(KAE.upVel, 0.8f);
+    KAE.sideVel = MultiplyVecByFloat(KAE.sideVel, 0.9f);
 
-    if (KAE.height > 0) KAE.height -= 1;
-    if (KAE.height > 0) physics.speed0 = AddVec(physics.speed0, MultiplyVecByFloat(up, KAE.height));
+    Vec3 addedVel = AddVec(KAE.upVel, KAE.sideVel);
 
-    if (KAE.jumpedSlow) movement.engineSpeed = 85.0f;
-    if (KAE.jumpedFast) movement.engineSpeed = 120.0f;
+    physics.speed0 = AddVec(physics.speed0, addedVel);
+    movement.engineSpeed = KAE.jumpSpeed;
 
-    // direction
-    Vec3 right = GetRight(physics.mainRot);
-
-    float jumpForce = 30.0f;
-    Vec3 sideVel;
-    sideVel.x = right.x * -KAE.railRideJumpDir * jumpForce;
-    sideVel.z = right.z * -KAE.railRideJumpDir * jumpForce;
-    sideVel.y = right.y * -KAE.railRideJumpDir * jumpForce;
-
-    physics.speed2.x += sideVel.x;
-    physics.speed2.z += sideVel.z;
-    physics.speed2.y += sideVel.y;
-
-    if ((KAE.ground && KAE.height < 2) || KAE.oob) {
-        KAE.jumped = KAE.jumpedSlow = KAE.jumpedFast = false;
-        KAE.height = 0;
-    }
+    if (VecLength(KAE.upVel) < 0.8f && KAE.ground) KAE.jumped = false;
 }
 
 } // Race

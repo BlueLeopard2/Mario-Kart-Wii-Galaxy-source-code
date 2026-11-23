@@ -25,84 +25,77 @@ namespace Race {
 
 // Per-player state KAE
 struct KMPAREAExpander {
-    bool flagPermStay[10];
-    bool flagKCLStay[10];
-    
-    // AREA indices (>=0 means player is inside the AREA)
-    s16 ConditionalObject;
-    s16 ConfigurableGravity;
-    s16 AntiGravity;
-    s16 PointGravity;
-    s16 Gliding;
-    s16 Wind;
-    s16 AirRing;
-    s16 Rail;
-    s16 Submarine;
-    s16 Speedboat;
-    s16 Teleport;
+    // AREA detection
+    bool flagPermStay[11];
+    bool flagKCLStay[11];
 
-    // Current AREA flags
+    s16 conditionalObject;
+    s16 configurableGravity;
+    s16 antiGravity;
+    s16 pointGravity;
+    s16 gliding;
+    s16 wind;
+    s16 airRing;
+    s16 rail;
+    s16 teleport;
+
+    // AREA activation state
     bool condObj;
-    bool antiGrav;
     bool configGrav;
-    bool glider;
+    bool antiGrav;
     bool pointGrav;
-    bool inGlider;
-
-    // Air
+    bool glider;
     bool windy;
     bool airSpeedUp;
-
-    // Ground
     bool onRail;
-    bool isRailRiding;
-
-    // Water
-    bool onWater;
-    bool underWater;
-
-    // Other
     bool portal;
-    bool launch;
-
     bool camera;
 
-    // Gravity values
-    float AREAGravity;
+    // Mechanic state
+    bool inGlider;
+    bool isRailRiding;
+    bool lastPointReached;
+    bool rotatedinAir;
+    bool isRespawning;
+
+    // Gravity and physics
     float upDown;
-    float underWaterGravity;
-    float yawVel;
-    float leanVel;
     float liftMemory;
-
-    // new model
     float gliderGravity;
-    float gliderBonusSpeed;
-    float gliderPitch;
-    float pitch;
-    float roll;
-    float previousPitch;
-    Vec3 flightDir;
-    float lift;
-    float drag;
 
+    Vec3 configGravVec;
     Vec3 antiGravVec;
+    Vec3 upVel;
+    Vec3 sideVel;
+    Vec3 flightDir;
     Vec3 cameraVec;
     Vec3 floorNormal;
     Vec3 floorNormal0;
 
-    bool rotatedinAir;
-
-    // RailRide modes
-    bool MKWorldRailRide;
-
+    // Glider
+    float gliderYaw;
+    float gliderRoll;
+    float gliderPitch;
 
     // Air boost
-    float airBooster;
     float airBoosterDuration;
 
+    // Rail riding
+    u16 routeId;
+    u8 nextPoint;
+    bool direction;
+    float jumpSpeed;
+    bool jumped;
 
-    // Player input / state (current frame)
+    // Teleportation
+    bool teleported;
+    u16 waitForTeleport;
+    u16 waitingTime;
+
+    // Player input
+    float xInput;
+    float yInput;
+    float zInput;
 
     bool accelerate;
     bool brake;
@@ -118,6 +111,7 @@ struct KMPAREAExpander {
     bool air20;
     bool wheelie;
 
+    // Item and player status
     bool mega;
     bool mushroom;
     bool star;
@@ -128,76 +122,40 @@ struct KMPAREAExpander {
     bool hit;
     bool tc;
     bool bullet;
-    
+
+    // Collision
     u32 kclFlag;
     u32 wheelFlag;
 
-    float xInput;
-    float yInput;
-    float zInput;
-
-    u16 routeId;
-    u8 nextPoint;
-    bool direction;
-    float railRideJumpDir;
-
+    // Kart statistics
     float acceleration;
     float handling;
     float handlingSpeed;
     float baseSpeed;
     float hardSpeedLimit;
-
-    // Previous frame state
-
-    bool prevCondObj;
-
-    bool prevHop;
-    bool prevMega;
-    bool prevMushroom;
-
-    bool prevOnRail;
-
-    bool prevUnderWater;
-
-    bool prevDest;
-    bool prevShocked;
-    bool prevStar;
-    bool prevOob;
-    bool prevStopped;
-
-    bool prevAirSpeedUp;
-
-    bool prevAntiGrav;
-    bool prevGliderPointGrav;
-    bool prevInGlider;
-
-    bool teleported;
-
-
-    // Timers / transition state
-
-    u16 waitForLaunch;
-    u16 waitForTeleport;
-    u16 waitBeforeJump;
-    u16 waitingTime;
-    u8 height;
-
-    bool jumpedSlow;
-    bool jumpedFast;
-    bool jumped;
-
-
     float normalSoftSpeedLimit;
 
     bool statsFound;
 
+    // Previous-frame state
+    bool prevCondObj;
+    bool prevInGlider;
+    bool prevHop;
+    bool prevMega;
+    bool prevMushroom;
+    bool prevOnRail;
+    bool prevShocked;
+    bool prevStar;
+    bool prevOob;
+    bool prevStopped;
+    bool prevAirSpeedUp;
+    bool prevAntiGrav;
 
     KMPAREAExpander();
     void Reset();
 };
 
 extern KMPAREAExpander KMPAREAExpand[12];
-extern u16 raceFrameCount;
 
 // In FrameRaceHook
 // General functions
@@ -214,10 +172,6 @@ void GliderMovement(Kart::Movement& movement, u8 playerId);
 void AntiGravity(Kart::Movement& movement, u8 playerId);
 
 void PointGravity(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
-
-void UnderWaterPhysics(Kart::Movement& movement, Kart::Physics& physics, const Kart::Status& status, u8 playerId);
-
-void RailRideState(Input::State* inputState,Kart::Movement& movement, Kart::Status& status, u8 playerId);
 
 void AirBoost(Kart::Movement& movement, u8 playerId);
 
@@ -241,11 +195,13 @@ void RespawnInTiltedGravity(Kart::Physics& physics, u8 playerId);
 void ConfigurableGravity(Kart::Physics& physics, u8 playerId);
 
 // railride
+void RailRideReset(Kart::Movement& movement, u8 playerId);
 void DetermineNextPoint(Kart::Physics& physics, Kart::Movement& movement, u8 playerId);
 void RailRideStart(Kart::Physics& physics, u8 playerId);
 void RailRidePhysics(Kart::Physics& physics, Kart::Movement& movement, u8 playerId);
 void RailRideRotation(Kart::Physics& physics, u8 playerId);
-void RailRideJump(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
+void RailRideJumpStart(Input::State* inputState, Kart::Physics& physics, Kart::Movement& movement, Kart::Status& status, u8 playerId);
+void RailRideJumpPhysics(Kart::Movement& movement, Kart::Physics& physics, Kart::Status& status, u8 playerId);
 void RailRideStop(Kart::Movement& movement, u8 playerId);
 
 // anti gravity
@@ -258,7 +214,7 @@ void RotateSpeedAfterTP(Kart::Movement& movement, Kart::Physics& physics, u8 pla
 // glider
 void GliderGravity(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
 void GliderRotation(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);
-void UpdatePitch(Kart::Physics& physics, u8 playerId);
+//void UpdatePitch(Kart::Physics& physics, u8 playerId);
 void UpdateYaw(Kart::Physics& physics, u8 playerId);
 void UpdateRoll(Kart::Physics& physics, u8 playerId);
 void UpdateFlightDirection(Kart::Movement& movement, Kart::Physics& physics, u8 playerId);

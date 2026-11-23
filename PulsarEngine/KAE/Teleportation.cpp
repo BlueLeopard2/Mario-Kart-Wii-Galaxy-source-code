@@ -14,12 +14,12 @@ void Teleportation(Kart::Physics& physics, u8 playerId) {
     KMP::Manager* kmp = KMP::Manager::sInstance;
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
-    if (KAE.waitForTeleport < kmp->areaSection->GetHolder(KAE.Teleport)->raw->setting1) {
+    if (KAE.waitForTeleport < kmp->areaSection->GetHolder(KAE.teleport)->raw->setting1) {
         KAE.waitForTeleport += 1;
         return;
     }
 
-    u8 routeId = kmp->areaSection->GetHolder(KAE.Teleport)->raw->routeId;
+    u8 routeId = kmp->areaSection->GetHolder(KAE.teleport)->raw->routeId;
     KMP::Holder<CNPT>* holder = kmp->GetHolder<CNPT>(routeId);
 
     if (!holder || !holder->raw) return;

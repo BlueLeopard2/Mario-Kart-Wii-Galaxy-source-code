@@ -23,7 +23,8 @@ static inline float Abs(float x) {
     return x < 0.0f ? -x : x;
 }
 
-static inline float Pow(float x, int y) {
+static inline float Pow(float x, u8 y) {
+    if (y == 0) return 1.0f;
     float z = 1;
 
     if (y < 0) {
@@ -31,7 +32,7 @@ static inline float Pow(float x, int y) {
         y = -y;
     }
 
-    for (int i = 0; i < y; i++) {
+    for (u8 i = 0; i < y; i++) {
         z *= x;
     }
     return z;
@@ -43,27 +44,6 @@ static inline float Max(float a, float b) {
 
 static inline float Min(float a, float b) {
     return (a < b) ? a : b;
-}
-
-static inline void FindSmallest2(float array[], u8 size, u8& smallestIndex, u8& secondSmallestIndex) {
-    smallestIndex = 0;
-    secondSmallestIndex = 1;
-
-    if (array[secondSmallestIndex] < array[smallestIndex]) {
-        u8 temp = smallestIndex;
-        smallestIndex = secondSmallestIndex;
-        secondSmallestIndex = temp;
-    }
-
-    for (u8 i = 2; i < size; i++) {
-        if (array[i] < array[smallestIndex]) {
-            secondSmallestIndex = smallestIndex;
-            smallestIndex = i;
-        }
-        else if (array[i] < array[secondSmallestIndex]) {
-            secondSmallestIndex = i;
-        }
-    }
 }
 
 // Vector math
@@ -169,6 +149,20 @@ static inline float GetUpSpeed(const Vec3 speed, Quat rot) {
 }
 
 // Different
+static inline float GetTargetSpeed(float baseSpeed, bool mega, bool tc, bool star, bool mushroom, bool mt, bool pmt, bool shrunk, bool crushed, bool feather) {
+    float speed = baseSpeed;
+
+    if (mega || tc) speed = 95.0f;
+    if (star) speed = 105.0f;
+    if (feather) speed = 85;
+    if (mushroom) speed *= 1.4f;
+    if (!mushroom && mt) speed *= 1.2f;
+    if (! mushroom && pmt) speed *= 1.32f;
+    if (shrunk || crushed) speed *= 0.7f;
+
+    return speed;
+}
+
 static inline void SnapSpeedToRotation(Kart::Movement& movement, Kart::Physics& physics) {
     Vec3 forward = GetForward(physics.mainRot);
     float len2D = EGG::Math::Sqrt(forward.x * forward.x + forward.z * forward.z);
@@ -245,6 +239,27 @@ static inline void MatchRollToGround(Kart::Physics& physics, Vec3 groundNor) {
     physics.mainRot.Normalise();
 }
 
+static inline void FindSmallest2(float array[], u8 size, u8& smallestIndex, u8& secondSmallestIndex) {
+    smallestIndex = 0;
+    secondSmallestIndex = 1;
+
+    if (array[secondSmallestIndex] < array[smallestIndex]) {
+        u8 temp = smallestIndex;
+        smallestIndex = secondSmallestIndex;
+        secondSmallestIndex = temp;
+    }
+
+    for (u8 i = 2; i < size; i++) {
+        if (array[i] < array[smallestIndex]) {
+            secondSmallestIndex = smallestIndex;
+            smallestIndex = i;
+        }
+        else if (array[i] < array[secondSmallestIndex]) {
+            secondSmallestIndex = i;
+        }
+    }
+}
+
 static inline void FindSmallest2Index(float array[], u8 size, u8& smallestIndex, u8& secondSmallestIndex) {
     smallestIndex = 0;
     secondSmallestIndex = 1;
@@ -284,7 +299,7 @@ static inline Vec3 FindClosestPoint(Vec3 A, Vec3 B, Vec3 C) {
 
 static inline void Stopper(Kart::Physics& physics) {
     Vec3 zero = Vec3(0,0,0);
-    physics.speed = physics.speed1Adj = physics.speed2 = physics.normalAcceleration = physics.speed3 = physics.acceleration0 = physics.engineSpeed = zero;
+    physics.speed = physics.speed2 = physics.normalAcceleration = physics.speed3 = physics.acceleration0 = physics.engineSpeed = zero;
 }
 
 #endif

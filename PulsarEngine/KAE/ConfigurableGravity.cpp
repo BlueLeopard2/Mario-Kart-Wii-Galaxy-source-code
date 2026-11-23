@@ -12,63 +12,68 @@ void RespawnInTiltedGravity(Kart::Physics& physics, u8 playerId) {
     KMP::Manager* kmp = KMP::Manager::sInstance;
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
-    static bool isRespawning = false;
     if (!KAE.oob && KAE.prevOob) {
-        isRespawning = true;
+        KAE.isRespawning = true;
         for (u16 i = 0; i < kmp->jgptSection->pointCount; i++) {
             KMP::Holder<JGPT>* holder = kmp->jgptSection->holdersArray[i];
             if (!holder || !holder->raw) continue;
-            if (kmp->areaSection->GetHolder(KAE.PointGravity)->raw->enemyRouteId == holder->raw->id) {
-                Vec3 rot = MultiplyVecByFloat(holder->raw->rotation, 3.14159265358979323846f / 180.0f);
 
-                physics.mainRot.SetRPY(rot.x, rot.y, rot.z);
+            if (kmp->areaSection->GetHolder(KAE.pointGravity)->raw->enemyRouteId != holder->raw->id) continue;
 
-                Vec3 up = GetUp(physics.mainRot);
-                Vec3 right = GetRight(physics.mainRot);
-                Vec3 forward = GetRight(physics.mainRot);
-                up.Normalize();
+            Vec3 rot = MultiplyVecByFloat(holder->raw->rotation, 3.14159265358979323846f / 180.0f);
+            physics.mainRot.SetRPY(rot.x, rot.y, rot.z);
 
-                Vec3 respawnOffset = MultiplyVecByFloat(up, 700.0f);
-                physics.position = AddVec(holder->raw->position, respawnOffset);
-                
-                physics.position = AddVec(physics.position, MultiplyVecByFloat(right, playerId * 300.0f));
-                physics.position = AddVec(physics.position, MultiplyVecByFloat(forward, playerId * -100.0f));
+            Vec3 up = GetUp(physics.mainRot);
+            Vec3 right = GetRight(physics.mainRot);
+            Vec3 forward = GetForward(physics.mainRot);
 
-                Vec3 gravity = SubVec(holder->raw->position, physics.position);
-                gravity.Normalize();
-                gravity = MultiplyVecByFloat(gravity, 1.3);
-                physics.speed0 = AddVec(physics.speed0, gravity);
+            Vec3 respawnOffset = MultiplyVecByFloat(up, 700.0f);
+            physics.position = AddVec(holder->raw->position, respawnOffset);
 
-            }
+            u8 respawnPositionZ = playerId % 4;
+            u8 respawnPositionX = playerId / 4;
+            
+            physics.position = AddVec(physics.position, MultiplyVecByFloat(right, respawnPositionZ * 200.0f));
+            physics.position = AddVec(physics.position, MultiplyVecByFloat(forward, respawnPositionX * -200.0f));
+
+            KAE.configGravVec = SubVec(holder->raw->position, physics.position);
+            KAE.configGravVec.Normalize();
+            KAE.configGravVec = MultiplyVecByFloat(KAE.configGravVec, 1.3f);
         }
     }
-    if (KAE.ground) isRespawning = false;
-    if (isRespawning) physics.stabilizationFactor = 0.0f;
+    if (!KAE.ground && KAE.isRespawning) {      
+        physics.speed0 = KAE.configGravVec;
+        physics.stabilizationFactor = 0.0f;
+    }
+    else KAE.isRespawning = false;
 }
 
 void ConfigurableGravity(Kart::Physics& physics, u8 playerId) { // updates gravity for all gravity changing mechanics
     KMP::Manager* kmp = KMP::Manager::sInstance;
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
-    if (KAE.inGlider) {
-        if (KAE.glider) {
-            KAE.upDown = (kmp->areaSection->GetHolder(KAE.Gliding)->raw->routeId == 1) ? 1.0f : -1.0f;
-            KAE.gliderGravity = KAE.upDown * kmp->areaSection->GetHolder(KAE.Gliding)->raw->setting2 / 100.0f;
+    if (KAE.configGrav && !KAE.isRespawning) {
+        u8 routeId = kmp->areaSection->GetHolder(KAE.teleport)->raw->routeId;
+        KMP::Holder<CNPT>* holder = kmp->GetHolder<CNPT>(routeId);
+
+        bool dynamicGrav = (kmp->areaSection->GetHolder(KAE.configurableGravity)->raw->enemyRouteId == 1);
+        if (!dynamicGrav) {
+            Vec3 direction;
+            direction.x = EGG::Math::Cos(holder->raw->angle.y) * EGG::Math::Cos(holder->raw->angle.z);
+            direction.y = EGG::Math::Sin(holder->raw->angle.y) * EGG::Math::Cos(holder->raw->angle.z);
+            direction.z = -EGG::Math::Sin(holder->raw->angle.z);
+            direction.Normalize();
+
+            KAE.configGravVec = MultiplyVecByFloat(direction, kmp->areaSection->GetHolder(KAE.configurableGravity)->raw->setting2 / 100.0f);  
+        } else {
+            Vec3 direction = SubVec(holder->raw->destPos, physics.position);
+            direction.Normalize();
+
+            KAE.configGravVec = MultiplyVecByFloat(direction, kmp->areaSection->GetHolder(KAE.configurableGravity)->raw->setting2 / 100.0f);
         }
-        physics.gravity = KAE.gliderGravity;
-    }
-    if (KAE.configGrav) {
-        KAE.upDown = (kmp->areaSection->GetHolder(KAE.ConfigurableGravity)->raw->routeId == 1) ? 1.0f : -1.0f;
-        float configGravity = KAE.upDown * kmp->areaSection->GetHolder(KAE.ConfigurableGravity)->raw->setting2 / 100.0f;
-        physics.gravity = configGravity;
-        KAE.camera = (kmp->areaSection->GetHolder(KAE.ConfigurableGravity)->raw->camera == 1) ? true : false;
-    }
-    if (KAE.antiGrav) {
-        KAE.camera = (kmp->areaSection->GetHolder(KAE.AntiGravity)->raw->camera == 1) ? true : false;
-    }
-    if (KAE.pointGrav) {
-        physics.gravity = 0.0f;
-        physics.speed0 = AddVec(physics.speed0, PointGravVec(physics, playerId));
+        if (!KAE.ground) physics.speed0 = AddVec(physics.speed0, KAE.configGravVec);
+
+        KAE.camera = (kmp->areaSection->GetHolder(KAE.configurableGravity)->raw->camera == 1) ? true : false;
     }
 }
 

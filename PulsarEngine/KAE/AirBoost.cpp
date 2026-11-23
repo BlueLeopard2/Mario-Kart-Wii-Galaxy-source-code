@@ -12,7 +12,7 @@ void AirBoost(Kart::Movement& movement, u8 playerId) {
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
     if (KAE.airSpeedUp && !KAE.prevAirSpeedUp) {
-        KAE.airBoosterDuration = kmp->areaSection->GetHolder(KAE.AirRing)->raw->setting1;
+        KAE.airBoosterDuration = kmp->areaSection->GetHolder(KAE.airRing)->raw->setting1;
         movement.ActivateMushroom();
     }
 

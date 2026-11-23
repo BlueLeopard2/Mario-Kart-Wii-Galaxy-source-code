@@ -26,7 +26,7 @@ public:
     Mtx34 invInertiaTensor; //0x34
     float rotationSpeed; //0x64
     Vec3 position; //0x68
-    Vec3 speed0; //0x74 speed caused by gravity and normal force
+    Vec3 speed0; //0x74 speed caused by gravity and normal force. Also includes bumping other players / surfaces and items
     Vec3 acceleration0; //0x80
     Vec3 unknown_0x8c; //0x8c
     Vec3 unknown_0x98; //0x98
@@ -43,7 +43,7 @@ public:
     Vec3 normalRotVec; //0x11c
     Quat specialRot; //0x128 e.g. trick
     Quat unknown_0x138; //0x138
-    float gravity; //1.3f most of the time, value is subtracted to speed0.y every frame
+    float gravity; //1.3f most of the time, value is subtracted from speed0.y every frame
     Vec3 engineSpeed; //speed caused by the kart engine
     u8 unknown_0x158[0x178 - 0x158];
     float stabilizationFactor;

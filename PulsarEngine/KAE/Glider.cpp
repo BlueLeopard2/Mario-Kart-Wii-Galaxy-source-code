@@ -15,13 +15,7 @@ void EnterGlider(Kart::Physics& physics, u8 playerId) {
 
     KAE.inGlider = true;
 
-    KAE.pitch = 0.0f;
-    KAE.previousPitch = 0.0f;
-
-    KAE.yawVel = 0.0f;
-
     KAE.flightDir = GetForward(physics.mainRot);
-    physics.engineSpeed.y *= 0.1f;
 }
 
 void ExitGlider(Kart::Physics& physics, u8 playerId) {
@@ -29,15 +23,17 @@ void ExitGlider(Kart::Physics& physics, u8 playerId) {
 
     KAE.inGlider = false;
 
-    KAE.pitch = 0.0f;
-    KAE.yawVel = 0.0f;
-    KAE.roll = 0.0f;
-    physics.rotVec0.y = 0.0f;
-    physics.rotVec1.z = 0.0f;
+    KAE.gliderYaw = 0.0f;
+    KAE.gliderRoll = 0.0f;
+    KAE.gliderPitch = 0.0f;
+    KAE.liftMemory = 0.0f;
+    physics.rotVec1 = Vec3(0, physics.rotVec1.y, 0);
+    physics.rotVec0.y = 0;
 }
 
 void GliderState(Kart::Physics& physics, u8 playerId) {
     KMP::Manager* kmp = KMP::Manager::sInstance;
+    if (!kmp) return;
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
     if (KAE.inGlider && (KAE.ground || KAE.oob)) {
@@ -47,9 +43,9 @@ void GliderState(Kart::Physics& physics, u8 playerId) {
         EnterGlider(physics, playerId);
     }
 
-    if (!kmp) return;
-    if (!kmp->areaSection->GetHolder(KAE.Gliding)) return;
-    if (kmp->areaSection->GetHolder(KAE.Gliding)->raw->routeId == 2) {
+
+    if (!kmp->areaSection->GetHolder(KAE.gliding)) return;
+    if (kmp->areaSection->GetHolder(KAE.gliding)->raw->routeId == 2) {
         ExitGlider(physics, playerId);
     }
 }
@@ -60,7 +56,7 @@ void GliderMovement(Kart::Movement& movement, u8 playerId) {
     const float dt = 1.0f / 60.0f;
 
     float gliderSpeed = movement.engineSpeed;
-    float targetSpeed = KAE.baseSpeed;
+    float targetSpeed = GetTargetSpeed(KAE.baseSpeed, KAE.mega, KAE.tc, KAE.star, KAE.mushroom, KAE.mtBoost, false, KAE.shocked, false, KAE.feather);
     float speedChange = 5.0f/6.0f * KAE.acceleration;
     float gliderBonusSpeed = 0.0f;
 
@@ -76,13 +72,9 @@ void GliderMovement(Kart::Movement& movement, u8 playerId) {
         targetSpeed *= (1/Abs(KAE.yInput)) * 0.75f;
         speedChange *= (1/Abs(KAE.yInput)) * 0.75f;
     }
-    if (KAE.mushroom) {
-        targetSpeed = KAE.hardSpeedLimit;
-        speedChange *= 2.5f;
-    }
-    
+     
     if (gliderSpeed <= targetSpeed) {
-        gliderSpeed += speedChange;
+        if (KAE.accelerate) gliderSpeed += speedChange;
 
         if (gliderSpeed > targetSpeed) gliderSpeed = targetSpeed;
     }
@@ -95,28 +87,18 @@ void GliderMovement(Kart::Movement& movement, u8 playerId) {
     movement.engineSpeed = gliderSpeed + gliderBonusSpeed;
 }
 
-void UpdatePitch(Kart::Physics& physics, u8 playerId) {
+/*void UpdatePitch(Kart::Physics& physics, u8 playerId) {
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
     const float maxPitch = 0.18f;
-    const float pitchResponse = 0.2f;
+    const float pitchResponse = 0.16f;
 
     float targetPitch = KAE.zInput * maxPitch;
 
-    // KAE.pitch += (targetPitch - KAE.pitch) * pitchResponse; // weird mechanism, would do next line personally, or a variation of that
-    KAE.pitch = targetPitch * pitchResponse;
+    KAE.pitchMemory += (targetPitch - KAE.pitchMemory) * pitchResponse;
 
-    float deltaPitch = KAE.pitch - KAE.previousPitch;
-    KAE.previousPitch = KAE.pitch;
-
-    Vec3 right = GetRight(physics.mainRot);
-
-    Quat pitchQuat;
-    pitchQuat.SetAxisRotation(right, deltaPitch);
-
-    physics.mainRot = MultiplyQuat(pitchQuat, physics.mainRot);
-    physics.mainRot.Normalise();
-}
+    physics.rotVec1.x = KAE.pitchMemory;
+}*/
 
 void UpdateYaw(Kart::Physics& physics, u8 playerId) {
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
@@ -125,10 +107,10 @@ void UpdateYaw(Kart::Physics& physics, u8 playerId) {
     const float maxYawVel = KAE.handling * 0.38f;
     const float targetYawVel = KAE.xInput * maxYawVel;
 
-    if (KAE.yawVel < targetYawVel) KAE.yawVel = Min(KAE.yawVel + yawAccel, targetYawVel);
-    else if (KAE.yawVel > targetYawVel) KAE.yawVel = Max(KAE.yawVel - yawAccel, targetYawVel);
+    if (KAE.gliderYaw < targetYawVel) KAE.gliderYaw = Min(KAE.gliderYaw + yawAccel, targetYawVel);
+    else if (KAE.gliderYaw > targetYawVel) KAE.gliderYaw = Max(KAE.gliderYaw - yawAccel, targetYawVel);
 
-    physics.rotVec0.y -= KAE.yawVel;
+    physics.rotVec0.y -= KAE.gliderYaw;
 }
 
 void UpdateRoll(Kart::Physics& physics, u8 playerId) {
@@ -137,10 +119,10 @@ void UpdateRoll(Kart::Physics& physics, u8 playerId) {
     float targetRoll = KAE.xInput * 0.18f;
     float damping = 0.98f;
 
-    KAE.roll += (targetRoll - KAE.roll) * 0.04f;
-    KAE.roll *= damping;
+    KAE.gliderRoll += (targetRoll - KAE.gliderRoll) * 0.04f;
+    KAE.gliderRoll *= damping;
 
-    physics.rotVec1.z = KAE.roll;
+    physics.rotVec1.z = KAE.gliderRoll;
 }
 
 void UpdateFlightDirection(Kart::Movement& movement, Kart::Physics& physics, u8 playerId) {
@@ -148,7 +130,7 @@ void UpdateFlightDirection(Kart::Movement& movement, Kart::Physics& physics, u8 
 
     Vec3 forward = GetForward(physics.mainRot);
 
-    const float follow = 0.0213f;
+    const float follow = 0.03f;
 
     KAE.flightDir = AddVec(KAE.flightDir, MultiplyVecByFloat(SubVec(forward, KAE.flightDir), follow));
     KAE.flightDir.Normalize();
@@ -158,21 +140,33 @@ void UpdateFlightDirection(Kart::Movement& movement, Kart::Physics& physics, u8 
     movement.lastDir.z = KAE.flightDir.z;
     movement.vel1Dir.x = KAE.flightDir.x;
     movement.vel1Dir.z = KAE.flightDir.z;
-    movement.dirDiff.x *= 0.0213f;
-    movement.dirDiff.z *= 0.0213f;
+    movement.dirDiff.x *= follow;
+    movement.dirDiff.z *= follow;
 }
 
 void UpdateLift(Kart::Movement& movement, Kart::Physics& physics, u8 playerId) {
+    KMP::Manager* kmp = KMP::Manager::sInstance;
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
+
+    if (KAE.glider) {
+        KAE.upDown = (kmp->areaSection->GetHolder(KAE.gliding)->raw->routeId == 1) ? 1.0f : -1.0f;
+        KAE.gliderGravity = KAE.upDown * kmp->areaSection->GetHolder(KAE.gliding)->raw->setting2 / 100.0f;
+    }
     
-    const float liftCoeff = 0.0000015f;
-    float speed = VecLength(physics.engineSpeed);
+    const float liftCoeff = 0.0003f;
+    const float targetSpeed = GetTargetSpeed(KAE.baseSpeed, KAE.mega, KAE.tc, KAE.star, KAE.mushroom, KAE.mtBoost, false, KAE.shocked, false, KAE.feather);
 
-    float targetLift = liftCoeff * Pow(speed, 3) * KAE.yInput;
+    float speedCoeff = (movement.engineSpeed / targetSpeed) * 60.0f;
+    speedCoeff = Clamp(speedCoeff, 30.0f, 60.0f);
 
-    KAE.liftMemory += (targetLift - KAE.liftMemory) * 0.1f;
+    float targetLift = (liftCoeff * Pow(speedCoeff, 2)) * KAE.yInput;
 
-    physics.speed0.y += KAE.upDown * KAE.liftMemory;
+    float response = 0.3f;
+    if (targetLift * KAE.liftMemory < 0.0f) response = 0.5f;
+
+    KAE.liftMemory += (targetLift - KAE.liftMemory) * response;
+
+    physics.gravity = KAE.gliderGravity + KAE.liftMemory;
 }
 
 } // Race

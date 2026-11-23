@@ -61,38 +61,59 @@ void AntiGravity(Kart::Movement& movement, u8 playerId) {
         if (!KAE.prevAntiGrav) {
             KAE.antiGravVec = Vec3(0.0f, -1.3f, 0.0f);
             kmRuntimeWrite16A(0x808B5AE8, 0x4000); // steepness doesn't matter for wheelie [Gab], doesn't work completely, some weirder angles still don't work.
+            if (!KAE.isRespawning) KAE.camera = (kmp->areaSection->GetHolder(KAE.antiGravity)->raw->camera == 1) ? true : false;
         }
 
         if (KAE.ground) {
-            Vec3 up = KAE.floorNormal;
-            up.Normalize();
             const float antiGravityStrength = 1.3f;
             KAE.antiGravVec = MultiplyVecByFloat(KAE.floorNormal, -antiGravityStrength);
         }
     }
     else if (!KAE.antiGrav && KAE.prevAntiGrav) {
-        kmRuntimeWrite16A(0x808B5AE8, 0x3F00); // normal wheelie steepness [Gab] 
+        kmRuntimeWrite16A(0x808B5AE8, 0x3F00); // normal wheelie steepness [Gab]
+        KAE.camera = false;
     }
 }
 
 void AntiGravPhysics(Kart::Physics& physics, u8 playerId) {
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
+    Vec3 up = KAE.floorNormal;
+    up.Normalize();
+
     physics.gravity = 0.0f;
 
-    if (KAE.ground && !KAE.hop) {
-        Vec3 up = KAE.floorNormal;
-        up.Normalize();
+    if (KAE.hit) {
+        float speed0 = VecLength(physics.speed0);
+        if (speed0 > 1.0f) {
+            Vec3 worldUp = WorldUp();
+
+            Quat rotation;
+            rotation.MakeVectorRotation(worldUp, KAE.floorNormal);
+            rotation.Normalise();
+
+            Vec3 rotatedSpeed;
+            rotation.RotateVector(physics.speed0, rotatedSpeed);
+            rotation.RotateVector(physics.speed1Adj, rotatedSpeed);
+            rotation.RotateVector(physics.speed2, rotatedSpeed);
+            rotation.RotateVector(physics.speed3, rotatedSpeed);
+            physics.speed0 = rotatedSpeed;
+        }
+    }
+
+    if (KAE.ground && !KAE.hop && !KAE.hit) {
         float alongUp = Dot(physics.normalAcceleration, up);
-        physics.normalAcceleration = MultiplyVecByFloat(up, alongUp);
-        physics.speed0 = Vec3(0,0,0); // make sure no weird gravity related things happen while on the ground
+        physics.normalAcceleration = MultiplyVecByFloat(up, alongUp); // fixes deceleration on weird angles
+        physics.speed0 = Vec3(0,0,0); // Stops bouncing
     }
     else if (!KAE.ground) {
-        physics.speed0 = AddVec(physics.speed0, KAE.antiGravVec); // apply the Anti Gravity to speed0
-        if (KAE.air20) physics.rotVec2.x = physics.rotVec2.y = physics.rotVec2.z = 0.0f; // Disables rotations in the air. Useful for now, but should be changed later to allow rotations while keeping the kart to Anti Gravity upright
+        physics.speed0 = AddVec(physics.speed0, KAE.antiGravVec);
+        
+        if (KAE.air20) physics.rotVec2.x = physics.rotVec2.y = physics.rotVec2.z = 0.0f; // Disables rotations in the air. 
+        // TODO: make physics.stabilizationfactor be relative to KAE.floorNormal instead of worldUp in air. Then, remove previous line. 
     }
     MatchPitchAndRollToGround(physics, KAE.floorNormal);
-    physics.stabilizationFactor = 0.0f; // Set physics.stabilizationFactor to 0 so Mario Kart Wii doesn't change the rotation
+    physics.stabilizationFactor = 0.0f; // Set physics.stabilizationFactor to 0 so Nintendo doesn't change the rotation
 }
 
 // fixes accelerating to worldDown [Melg]

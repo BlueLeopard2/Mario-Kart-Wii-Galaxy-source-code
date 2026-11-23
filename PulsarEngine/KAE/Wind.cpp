@@ -16,8 +16,8 @@ void Wind(Kart::Physics& physics, u8 playerId) {
     const float dt = 1.0f / 60.0f;
 
     if (KAE.windy) {
-        float windPower = kmp->areaSection->GetHolder(KAE.Wind)->raw->setting2 / 100.0f;
-        Vec3 windDir = (kmp->areaSection->GetHolder(KAE.Wind)->raw->rotation);
+        float windPower = kmp->areaSection->GetHolder(KAE.wind)->raw->setting2 / 100.0f;
+        Vec3 windDir = (kmp->areaSection->GetHolder(KAE.wind)->raw->rotation);
         windDir.Normalize();
         
         physics.speed2 = AddVec(physics.speed2, MultiplyVecByFloat(windDir, windPower*dt));

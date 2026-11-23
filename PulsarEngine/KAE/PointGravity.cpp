@@ -19,12 +19,12 @@ Vec3 PointGravVec(Kart::Physics& physics, u8 playerId) {
     for (u16 i = 0; i < kmp->cnptSection->pointCount; i++) {
         KMP::Holder<CNPT>* holder = kmp->cnptSection->holdersArray[i];
         if (!holder || !holder->raw) continue;
-        if (kmp->areaSection->GetHolder(KAE.PointGravity)->raw->routeId == holder->raw->id) continue;
+        if (kmp->areaSection->GetHolder(KAE.pointGravity)->raw->routeId == holder->raw->id) continue;
 
         Vec3 centerDiff = SubVec(physics.position, holder->raw->destPos);
 
-        float gravStrength = (kmp->areaSection->GetHolder(KAE.PointGravity)->raw->setting2 / 100.0f);
-        float pushPull = (kmp->areaSection->GetHolder(KAE.Gliding)->raw->routeId == 0) ? -1.0f : 1.0f;
+        float gravStrength = (kmp->areaSection->GetHolder(KAE.pointGravity)->raw->setting2 / 100.0f);
+        float pushPull = (kmp->areaSection->GetHolder(KAE.pointGravity)->raw->routeId == 0) ? -1.0f : 1.0f;
 
         gravStrength *= pushPull;
         centerDiff.Normalize();

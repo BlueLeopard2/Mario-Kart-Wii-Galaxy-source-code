@@ -1,3 +1,4 @@
+#include <MarioKartWii/Input/ControllerHolder.hpp>
 #include <MarioKartWii/Kart/KartPhysics.hpp>
 #include <MarioKartWii/Kart/KartManager.hpp>
 #include <MarioKartWii/Kart/KartSub.hpp>
@@ -33,7 +34,13 @@ static void EarlyPhysicsUpdate(Kart::Physics& physics, float dt, float maxSpeed,
     }
 
     Kart::Player* player = kartManager->GetKartPlayer(playerId);
+    if (!player) return;
     Kart::Movement* movement = player->kartSub->kartMovement;
+    if (!movement) return;
+    Kart::Status* status = player->kartSub->kartStatus;
+    Input::State* inputState = &player->kartSub->GetControllerHolder().inputStates[0];
+    if (!inputState) return;
+
     KMPAREAExpander& KAE = KMPAREAExpand[playerId];
 
     ConfigurableGravity(physics, playerId);
@@ -43,26 +50,27 @@ static void EarlyPhysicsUpdate(Kart::Physics& physics, float dt, float maxSpeed,
 
     if (KAE.inGlider) {
         GliderMovement(*movement, playerId);
-        UpdatePitch(physics, playerId);
         UpdateYaw(physics, playerId);
         UpdateRoll(physics, playerId);
         UpdateFlightDirection(*movement, physics, playerId);
         UpdateLift(*movement, physics, playerId);
     }
 
-    if (KAE.onRail && KAE.ground && !KAE.isRailRiding) RailRideStart(physics, playerId);
-    if (KAE.isRailRiding) {
+    if (KAE.onRail && KAE.ground && !KAE.isRailRiding && !KAE.lastPointReached && !KAE.jumped) RailRideStart(physics, playerId);
+    if (KAE.isRailRiding && !KAE.lastPointReached && KAE.onRail) {
         RailRidePhysics(physics, *movement, playerId);
         RailRideRotation(physics, playerId);
-        DetermineNextPoint(physics, *movement, playerId);
+
+        RailRideJumpStart(inputState, physics, *movement, *status, playerId);
         RailRideStop(*movement, playerId);
+
+        DetermineNextPoint(physics, *movement, playerId);
     }
-    if (KAE.jumped) RailRideJump(*movement, physics, playerId);
+    if (KAE.jumped) RailRideJumpPhysics(*movement, physics, *status, playerId);
+    if ((KAE.air20 || !KAE.onRail) && !KAE.jumped) RailRideReset(*movement, playerId);
 
     if (KAE.teleported) RotateSpeedAfterTP(*movement, physics, playerId);
     if (KAE.portal) Teleportation(physics, playerId);
-
-    if (KAE.onRail && !KAE.prevOnRail && KAE.ground) Stopper(physics);
     
     PrevPhysicsState(playerId);
 
